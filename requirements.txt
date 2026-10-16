@@ -1,0 +1,2 @@
+# Current local inference overlay; requires the existing shared PyTorch/CUDA environment.
+-r requirements-qwen35-local.txt

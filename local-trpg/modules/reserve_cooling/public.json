@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "module_id": "reserve_cooling",
+  "module_version": "1.0.0",
+  "title": "备用冷却",
+  "opening": "“同路号”猛地震了一下。工作频道里，顾成让所有人离开动力舱门口：他的右手被热气烫伤，主循环的回流量还在下降。驾驶舱显示，货箱温度正常。\n\n船长许岚要求暂时别动货舱的冷却支路。保安韩松守在货舱口，问你是否需要工具。你是这趟船临时雇来的检修员，还没看过那条临时支路的工单。\n\n主回路热负荷：0/12。十二格内仍未稳定，动力舱会报废，随后有三格撤离时间。你在生活舱，可以使用工作频道或私人通话。",
+  "premise": "货船“同路号”在减速途中失去动力。你是临时随船检修员，需要决定查什么、相信谁、让谁合作，以及保住哪些东西。船上共有你和五名船员。",
+  "locations": {
+    "bridge": {
+      "id": "bridge",
+      "name": "驾驶舱",
+      "visible_objects": [
+        "审计页",
+        "值班记录",
+        "航图",
+        "通信终端"
+      ]
+    },
+    "common": {
+      "id": "common",
+      "name": "生活舱",
+      "visible_objects": [
+        "简图",
+        "工作频道",
+        "集合地点"
+      ]
+    },
+    "clinic": {
+      "id": "clinic",
+      "name": "医务间",
+      "visible_objects": [
+        "货物说明副本",
+        "处置物资"
+      ]
+    },
+    "engine": {
+      "id": "engine",
+      "name": "动力舱",
+      "visible_objects": [
+        "流量面板",
+        "改接工单",
+        "阀组",
+        "操作卡",
+        "普通工具"
+      ]
+    },
+    "cargo": {
+      "id": "cargo",
+      "name": "货舱",
+      "visible_objects": [
+        "四只细胞内盒",
+        "原制冷故障贴纸",
+        "货物标签",
+        "手动隔离阀"
+      ]
+    },
+    "lifeboat": {
+      "id": "lifeboat",
+      "name": "气闸与救生艇",
+      "visible_objects": [
+        "救生艇",
+        "应急柜",
+        "保冷箱",
+        "储冷芯",
+        "补给票"
+      ]
+    }
+  },
+  "characters": {
+    "captain": {
+      "id": "captain",
+      "name": "许岚",
+      "role": "船长"
+    },
+    "doctor": {
+      "id": "doctor",
+      "name": "方榆",
+      "role": "医生"
+    },
+    "mechanic": {
+      "id": "mechanic",
+      "name": "顾成",
+      "role": "机械师"
+    },
+    "comms": {
+      "id": "comms",
+      "name": "林舟",
+      "role": "通讯员"
+    },
+    "guard": {
+      "id": "guard",
+      "name": "韩松",
+      "role": "保安"
+    }
+  },
+  "player": {
+    "id": "player",
+    "role": "临时随船检修员",
+    "location_id": "common",
+    "health": "healthy",
+    "skills": {
+      "observe": 2,
+      "technical": 1,
+      "social": 1,
+      "action": 0
+    },
+    "inventory": [
+      "multitool",
+      "recorder",
+      "face_mask",
+      "work_card"
+    ]
+  },
+  "rules": [
+    "普通走廊移动、澄清和重读已知资料不消耗时间；调查、交涉和操作通常各一格。",
+    "一格约五分钟；阅读和等待模型不耗游戏时间。",
+    "可通过工作频道广播，也可指定对象私聊。私下说明只供裁决，不会发给船员。",
+    "正常工作封条可由检修员打开，不需要船长密码。",
+    "健康依次为正常、轻伤、受伤、失能；结果分别记录人员、货物和船的保全。"
+  ]
+}

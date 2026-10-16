@@ -1,0 +1,24 @@
+# Local inference overlay. Reuses the installed torch 2.14.0+cu130 and CUDA
+# libraries from .venv-chat; do not reinstall the cloud torch 2.9.0 environment.
+transformers==5.17.0
+peft==0.21.0
+bitsandbytes==0.50.2
+accelerate==1.10.1
+tokenizers==0.23.2
+huggingface-hub==1.32.0
+safetensors==0.8.0
+sentencepiece==0.2.2
+flash-linear-attention==0.5.2
+fla-core==0.5.2
+rich==15.0.0
+prompt-toolkit==3.0.53
+wcwidth==0.8.4
+unicodeit==0.7.5
+uniseg==0.10.1
+# Structured TRPG generation; installed offline from verified physical-download wheels.
+xgrammar==0.2.8
+apache-tvm-ffi==0.1.14.post1
+pydantic==2.14.1
+annotated-types==0.8.0
+pydantic-core==2.50.1
+typing-inspection==0.4.4

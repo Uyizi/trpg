@@ -1,0 +1,29 @@
+[project]
+name = "local-trpg"
+version = "0.1.0"
+description = "Local, private multi-character text adventure"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.115.12",
+  "uvicorn==0.34.2",
+  "httpx==0.28.1",
+  "pydantic==2.11.4",
+]
+
+[dependency-groups]
+dev = ["pytest==8.3.5", "pytest-asyncio==0.26.0"]
+
+[build-system]
+requires = ["setuptools==80.3.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+local_trpg = ["agents/prompts/*.txt"]

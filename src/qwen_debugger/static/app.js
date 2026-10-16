@@ -1,0 +1,63 @@
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const token=$('meta[name="qdebug-token"]').content;
+let detailStamp=null;
+let data={cases:[],profiles:[],jobs:[],suites:[],reviews:[]}, currentJob=null, currentReview=null, busy=false, polling=false;
+const pretty=x=>JSON.stringify(x,null,2);
+function notice(message,error=false){const e=$('#notice');e.textContent=message;e.classList.toggle('error',error);e.hidden=false;}
+async function get(url){const r=await fetch(url);const x=await r.json();if(!r.ok)throw Error(x.error||r.status);return x;}
+async function act(action,params){const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Qdebug-Token':token},body:JSON.stringify({action,params})});const x=await r.json();if(!r.ok)throw Error(x.error||r.status);return x;}
+function safe(fn){return async e=>{if(e)e.preventDefault();try{await fn(e);}catch(err){notice(err.message,true);}};}
+function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
+function button(text,fn){const b=node('button',text);b.type='button';b.onclick=safe(fn);return b;}
+function budget(f){return {requests:+f.elements.requests.value,output_tokens:+f.elements.output_tokens.value,seconds:+f.elements.seconds.value};}
+function values(f){return Object.fromEntries(new FormData(f));}
+function split(s){return s.split(',').map(x=>x.trim()).filter(Boolean);}
+function experimentData(f){const p=values(f);p.budget=budget(f);delete p.requests;delete p.output_tokens;delete p.seconds;if(p.pairs)p.pairs=+p.pairs;if(p.repeats)p.repeats=+p.repeats;if(p.factors)p.factors=split(p.factors);return p;}
+async function launch(p){if(busy)return;busy=true;try{p.request_id=crypto.randomUUID();const r=await act('experiment.create',p);notice('已创建后台任务：'+r.job_id);await refresh();navigate('jobs');await showJob(r.job_id);}finally{busy=false;}}
+function navigate(page){$$('[data-section]').forEach(e=>e.hidden=e.dataset.section!==page);$$('[data-page]').forEach(e=>e.classList.toggle('active',e.dataset.page===page));$('#page-title').textContent=$(`[data-page="${page}"]`).textContent;}
+$$('[data-page]').forEach(e=>e.onclick=()=>navigate(e.dataset.page));
+function options(){
+ const latest=new Map();data.cases.forEach(c=>{if(!latest.has(c.id)||latest.get(c.id).revision<c.revision)latest.set(c.id,c);});
+ const items={cases:[...latest.values()].map(c=>[c.id,`${c.id} · r${c.revision} · ${c.family}`]),profiles:data.profiles.map(p=>[p.hash,`${p.id} · r${p.revision} · ${p.backend}`]),suites:data.suites.filter((s,i,a)=>!a.some(t=>t.id===s.id&&t.revision>s.revision)).map(s=>[s.id,`${s.id} · r${s.revision} · ${s.case_hashes.length}题`]),jobs:data.jobs.map(j=>[j.id,`${j.id} · ${j.state}`])};
+ $$('select[data-options]').forEach(e=>{const old=[...e.selectedOptions].map(o=>o.value),list=items[e.dataset.options],signature=JSON.stringify(list);if(e.dataset.signature===signature)return;e.dataset.signature=signature;e.replaceChildren();if(e.dataset.empty)e.append(new Option(e.dataset.empty,''));list.forEach(([v,t])=>e.append(new Option(t,v)));if(e.multiple)[...e.options].forEach(o=>o.selected=old.includes(o.value));else if(old.some(v=>[...e.options].some(o=>o.value===v)))e.value=old[0];});
+ const rs=$('#review-select'),old=rs.value;rs.replaceChildren(...data.reviews.map(r=>new Option(`${r.review_id} · ${r.status}`,r.review_id)));if(data.reviews.some(r=>r.review_id===old))rs.value=old;
+}
+async function refresh(){data=await get('/api/state');options();$('#connection').textContent='本机已连接';$('#last-update').textContent='更新 '+new Date().toLocaleTimeString();$('#data-directory').textContent='数据目录：'+data.data_directory;
+ $('#profile-list').textContent=pretty(data.profiles.map(({hash,...p})=>p));$('#suite-list').textContent=pretty(data.suites);
+ const list=$('#case-list');list.replaceChildren();data.cases.slice().reverse().forEach(c=>list.append(button(`${c.id} · r${c.revision} · ${c.source||'未声明来源'}`,async()=>{$('#case-snapshot').textContent=pretty(await get('/api/object?hash='+c.hash));$('#case-snapshot').parentElement.open=true;})));
+ const jobs=$('#job-list');jobs.replaceChildren();data.jobs.forEach(j=>{const tr=node('tr');[j.id,j.state,`${j.completed}/${j.planned}`,`${j.requests}/${j.budget.requests}`,`${j.tokens}/${j.budget.output_tokens}`].forEach(v=>tr.append(node('td',v)));const ops=node('td');ops.append(button('查看',()=>showJob(j.id)));if(j.state==='PENDING')ops.append(button('启动',async()=>{await act('jobs.start',{id:j.id});notice('队列已启动');}));if(['PENDING','RUNNING'].includes(j.state)){const b=button(j.cancel?'取消待生效':'取消',async()=>{await act('jobs.cancel',{id:j.id});await refresh();});b.disabled=!!j.cancel;ops.append(b);}tr.append(ops);jobs.append(tr);});
+}
+async function selectedCase(){const id=$('#experiment-form').elements.case.value,c=data.cases.filter(c=>c.id===id).sort((a,b)=>b.revision-a.revision)[0];if(c){const x=await get('/api/object?hash='+c.hash);$('#selected-case').textContent=pretty({messages:x.messages,gold:x.gold,split:x.split});}}
+$('#experiment-form').elements.case.onchange=safe(selectedCase);
+function experimentFields(){const f=$('#experiment-form'),k=f.elements.kind.value;for(const name of ['factor','factors','repeats','pairs'])f.elements[name].closest('label').hidden= !({factor:['contrast'],factors:['investigate'],repeats:['replay'],pairs:['contrast','investigate']}[name].includes(k));}
+$('#experiment-form').elements.kind.onchange=experimentFields;experimentFields();
+$('#preview-experiment').onclick=safe(async()=>{$('#plan-output').textContent=pretty(await act('experiment.preview',experimentData($('#experiment-form'))));});
+$('#experiment-form').onsubmit=safe(async()=>{await launch(experimentData($('#experiment-form')));});
+$('#case-form').onsubmit=safe(async()=>{const r=await act('case.import',{case:JSON.parse($('#case-form').elements.json.value)});notice('案例已导入：'+r.case.case_id+'，hash='+r.hash);await refresh();await selectedCase();});
+$('#raw-template').onclick=()=>{$('#case-form').elements.json.value=pretty({schema_version:'1.0',case_id:'my_case_001',revision:1,root_case_id:'my_case_001',family_id:'my_source_family',provenance:{kind:'user_provided'},selected_on_outcome:true,split:'development',input:{kind:'raw',messages:[{role:'user',content:'在这里填写完整问题；需要时加入前序 system/user/assistant 消息'}]},gold:{kind:'exact_text',expected:'在这里填写明确的标准答案',normalizers:['strip_outer_whitespace'],source:'user_provided'}});};
+$('#fixtures').onclick=safe(async()=>{const r=await act('fixtures',{});notice(`已导入 ${r.count} 个合成案例，来自 ${r.families} 个模板家族。`);await refresh();await selectedCase();});
+function profileTemplate(backend){const p={id:backend==='mock'?'demo-mock':backend==='local'?'local-short-v1':'local-api',revision:backend==='local'?2:1,backend,max_new_tokens:backend==='local'?64:1024,temperature:0,thinking:false,timeout_seconds:240};if(backend==='local')p.kv_cache='q8';if(backend==='api'){p.api_base='http://127.0.0.1:8080/v1';p.api_model='填写服务实际模型名';p.api_key_env=null;}$('#profile-form').elements.json.value=pretty(p);}
+$('#mock-profile').onclick=()=>profileTemplate('mock');$('#local-profile').onclick=()=>profileTemplate('local');$('#api-profile').onclick=()=>profileTemplate('api');
+$('#profile-form').onsubmit=safe(async()=>{const r=await act('profile.import',{profile:JSON.parse($('#profile-form').elements.json.value)});notice('配置已保存：'+r.hash);await refresh();});
+$('#doctor').onclick=safe(async()=>{$('#doctor-output').textContent='正在读取本机配置…';$('#doctor-output').textContent=pretty(await get('/api/doctor'));});
+$('#suite-form').onsubmit=safe(async()=>{const f=$('#suite-form'),p=values(f);p.cases=[...f.elements.cases.selectedOptions].map(o=>o.value);p.revision=+p.revision;const r=await act('suite.create',p);notice('已保存套件 '+r.id+' r'+r.revision);await refresh();});
+function compareData(){return {...experimentData($('#compare-form')),kind:'compare'};}
+$('#preview-compare').onclick=safe(async()=>{$('#compare-plan').textContent=pretty(await act('experiment.preview',compareData()));});$('#compare-form').onsubmit=safe(()=>launch(compareData()));
+$('#proposal-form').onsubmit=safe(async()=>{const r=await act('review.propose',values($('#proposal-form')));notice('待审核：'+r.review_id);await refresh();$('#review-select').value=r.review_id;await showReview();});
+async function showReview(){currentReview=data.reviews.find(r=>r.review_id===$('#review-select').value);if(!currentReview)return;const [a,b]=await Promise.all([get('/api/object?hash='+currentReview.parent_hash),get('/api/object?hash='+currentReview.child_hash)]);$('#review-original').textContent=pretty({messages:a.messages,gold:a.gold,hash:currentReview.parent_hash});$('#review-candidate').textContent=pretty({messages:b.messages,gold:b.gold,hash:currentReview.child_hash});$('#review-record').textContent=pretty(currentReview);$('#review-form button').disabled=currentReview.status!=='unknown';$('#review-run').disabled=currentReview.status!=='human_confirmed';}
+$('#review-select').onchange=safe(showReview);
+$('#review-form').onsubmit=safe(async()=>{if(!currentReview)throw Error('请先选择审核');await act('review.decide',{...values($('#review-form')),id:currentReview.review_id,parent_hash:currentReview.parent_hash,candidate_hash:currentReview.child_hash});notice('已保存对指定散列的实际审核');await refresh();await showReview();});
+$('#review-run').onclick=safe(()=>{if(!currentReview)throw Error('请选择审核');return launch({kind:'review',review:currentReview.review_id,profile:$('#review-profile').value,pairs:2,budget:{requests:4,output_tokens:4096,seconds:600}});});
+async function showJob(id){currentJob=id;const d=await get('/api/job?id='+encodeURIComponent(id));if(currentJob!==id)return;detailStamp=d.status.state+':'+d.status.completed;$('#job-panel').hidden=false;$('#job-heading').textContent=id;$('#job-detail').textContent=pretty(d);$('#download-links').replaceChildren();const counts=$('#job-counts');counts.replaceChildren();[`状态 ${d.status.state}`,`完成 ${d.status.completed}/${d.status.planned}`,`剩余请求 ${d.status.remaining_requests}`,`剩余输出 token ${d.status.remaining_output_tokens}`,`心跳 ${d.status.heartbeat||'尚未开始'}`].forEach(t=>counts.append(node('span',t)));
+ const cs=$('#job-cases');cs.replaceChildren();d.cases.forEach(c=>{const box=node('div');box.append(node('h3',c.case_id),node('pre',pretty({messages:c.messages,gold:c.gold})));cs.append(box);});const os=$('#job-observations');os.replaceChildren();d.observations.forEach(o=>{const a=d.attempts.find(a=>a.id===o.attempt_id),box=node('details');box.append(node('summary',`${o.seed} · ${o.outcome||o.state} · ${o.job_id}`),node('pre',pretty(o)));if(a){box.append(node('pre',pretty(a)));['request_hash','response_hash'].forEach(k=>{if(a[k])box.append(button(k==='request_hash'?'读取实际请求':'读取原始响应',async e=>{const v=await get('/api/artifact?hash='+a[k]);box.append(node('pre',pretty(v)));}));});}os.append(box);});
+ $('#confirm-form').hidden=!['investigation','contrast','matrix'].includes(d.manifest.kind);
+}
+$('#refresh').onclick=safe(async()=>{await refresh();if(currentJob)await showJob(currentJob);});$('#recover').onclick=safe(async()=>{const r=await act('jobs.recover',{});notice(r.status);await refresh();});
+$('#export').onclick=safe(async()=>{if(!currentJob)return;const r=await act('export',{id:currentJob});const box=$('#download-links');box.replaceChildren();for(const [text,url] of [['打开离线报告',r.report],['下载完整证据 ZIP',r.download]]){const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener';box.append(a,document.createTextNode('　'));}notice('报告已导出，包含全部计划观察和原始证据。');});
+function confirmData(){return {...experimentData($('#confirm-form')),kind:'confirm',experiment:currentJob};}
+$('#preview-confirm').onclick=safe(async()=>{$('#confirm-plan').textContent=pretty(await act('experiment.preview',confirmData()));});$('#confirm-form').onsubmit=safe(()=>launch(confirmData()));
+(async()=>{try{profileTemplate('mock');await refresh();await selectedCase();await showReview();}catch(e){notice(e.message,true);$('#connection').textContent='连接失败';}})();
+setInterval(async()=>{if(polling||document.hidden)return;polling=true;try{await refresh();const selected=data.jobs.find(j=>j.id===currentJob);if(selected && detailStamp!==selected.state+':'+selected.completed)await showJob(currentJob);}catch(e){$('#connection').textContent='连接断开';}finally{polling=false;}},2000);
+
+$('#probe').onclick=safe(()=>{const profile=$('#probe-profile').value,p=data.profiles.find(p=>p.hash===profile);if(!p)throw Error('请先导入配置');return launch({kind:'probe',profile,budget:{requests:1,output_tokens:p.max_new_tokens,seconds:300}});});

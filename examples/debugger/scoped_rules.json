@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "case_id": "rules",
+  "revision": 1,
+  "root_case_id": "rules",
+  "family_id": "positive_rules_template_v1",
+  "provenance": {
+    "kind": "synthetic"
+  },
+  "selected_on_outcome": false,
+  "split": "development",
+  "input": {
+    "kind": "structured",
+    "task_type": "scoped_rules_v1",
+    "renderer_id": "scoped_rules_zh_v1",
+    "payload": {
+      "predicates": [
+        {
+          "id": "a",
+          "name": "甲成立"
+        },
+        {
+          "id": "b",
+          "name": "乙成立"
+        },
+        {
+          "id": "c",
+          "name": "丙成立"
+        }
+      ],
+      "facts": [
+        "a"
+      ],
+      "rules": [
+        {
+          "if_all": [
+            "a"
+          ],
+          "then": "b"
+        },
+        {
+          "if_all": [
+            "b"
+          ],
+          "then": "c"
+        }
+      ],
+      "query": {
+        "kind": "is_entailed",
+        "predicate": "c",
+        "answer_format": "yes_no_only"
+      }
+    }
+  },
+  "gold": {
+    "kind": "exact_text",
+    "expected": "是",
+    "normalizers": [
+      "strip_outer_whitespace"
+    ],
+    "source": "deterministic_solver"
+  }
+}

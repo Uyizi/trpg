@@ -1,0 +1,13 @@
+# 云端独立 .venv35；不要覆盖本地推理环境。实际完整版本见云端 environment35.txt。
+torch==2.9.0
+transformers==5.17.0
+accelerate==1.10.1
+tokenizers==0.23.2
+huggingface-hub==1.32.0
+safetensors==0.8.0
+flash-linear-attention==0.5.2
+fla-core==0.5.2
+peft==0.21.0
+bitsandbytes==0.50.2
+pyarrow==25.0.1
+sentencepiece==0.2.2

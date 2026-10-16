@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qwen-behavior-debugger"
+version = "1.0.0"
+description = "Local model behavior workbench: replay, valid transforms, confirmation and regression"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2.12,<3"]
+
+[project.scripts]
+qdebug = "qwen_debugger.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+qwen_debugger = ["static/*.html", "static/*.css", "static/*.js"]

@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "case_id": "owner",
+  "revision": 1,
+  "root_case_id": "owner",
+  "family_id": "owner_chain_v1",
+  "provenance": {
+    "kind": "synthetic"
+  },
+  "selected_on_outcome": false,
+  "split": "development",
+  "input": {
+    "kind": "structured",
+    "task_type": "closed_world_owner_v1",
+    "renderer_id": "owner_transfer_zh_v1",
+    "payload": {
+      "entities": [
+        {
+          "id": "p1",
+          "name": "林夏"
+        },
+        {
+          "id": "p2",
+          "name": "顾川"
+        },
+        {
+          "id": "p3",
+          "name": "许遥"
+        }
+      ],
+      "object": {
+        "id": "o1",
+        "name": "蓝色文件夹"
+      },
+      "initial_owner_id": "p1",
+      "events": [
+        {
+          "kind": "transfer",
+          "from_id": "p1",
+          "to_id": "p2"
+        },
+        {
+          "kind": "transfer",
+          "from_id": "p2",
+          "to_id": "p3"
+        }
+      ],
+      "independent_noise": [
+        {
+          "kind": "background",
+          "text": "窗外正在下雨。"
+        }
+      ],
+      "query": {
+        "kind": "final_owner",
+        "object_id": "o1",
+        "answer_format": "entity_name_only"
+      }
+    }
+  },
+  "gold": {
+    "kind": "exact_text",
+    "expected": "许遥",
+    "normalizers": [
+      "strip_outer_whitespace"
+    ],
+    "source": "deterministic_solver"
+  }
+}

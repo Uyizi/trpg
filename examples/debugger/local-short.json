@@ -1,0 +1,18 @@
+{
+  "id": "local-short-v1",
+  "backend": "local",
+  "revision": 2,
+  "model_path": null,
+  "context_length": 65536,
+  "max_input_tokens": 4096,
+  "max_new_tokens": 64,
+  "temperature": 0.0,
+  "thinking": false,
+  "kv_cache": "q8",
+  "fast_kernels": true,
+  "prefill_chunk_size": 1024,
+  "timeout_seconds": 240,
+  "mock_text": "许遥",
+  "mock_finish": "stop",
+  "mock_usage_unknown": false
+}

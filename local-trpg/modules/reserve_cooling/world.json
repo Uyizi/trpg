@@ -1,0 +1,3261 @@
+{
+  "schema_version": 1,
+  "module_id": "reserve_cooling",
+  "module_version": "1.0.0",
+  "title": "备用冷却",
+  "participants": [
+    "player",
+    "captain",
+    "doctor",
+    "mechanic",
+    "comms",
+    "guard"
+  ],
+  "initiative_order": [
+    "guard",
+    "doctor",
+    "mechanic",
+    "comms",
+    "captain"
+  ],
+  "player": {
+    "id": "player",
+    "role": "临时随船检修员",
+    "location_id": "common",
+    "health": "healthy",
+    "skills": {
+      "observe": 2,
+      "technical": 1,
+      "social": 1,
+      "action": 0
+    },
+    "inventory": [
+      "multitool",
+      "recorder",
+      "face_mask",
+      "work_card"
+    ],
+    "name": "检修员",
+    "name_from_user": true,
+    "actions": [
+      "take_cold_cases",
+      "transfer_cells",
+      "begin_safe_isolation",
+      "complete_safe_isolation",
+      "isolate_branch",
+      "restore_main_loop",
+      "treat_actor",
+      "send_distress",
+      "prepare_pod",
+      "assemble_crew",
+      "board_pod",
+      "launch_pod",
+      "assist_evacuation"
+    ]
+  },
+  "locations": {
+    "bridge": {
+      "id": "bridge",
+      "name": "驾驶舱",
+      "visible_objects": [
+        "审计页",
+        "值班记录",
+        "航图",
+        "通信终端"
+      ],
+      "connected_to": [
+        "common",
+        "clinic",
+        "engine",
+        "cargo",
+        "lifeboat"
+      ],
+      "movement_ticks": 0,
+      "access_guard_id": "normal_corridor_access"
+    },
+    "common": {
+      "id": "common",
+      "name": "生活舱",
+      "visible_objects": [
+        "简图",
+        "工作频道",
+        "集合地点"
+      ],
+      "connected_to": [
+        "bridge",
+        "clinic",
+        "engine",
+        "cargo",
+        "lifeboat"
+      ],
+      "movement_ticks": 0,
+      "access_guard_id": "normal_corridor_access"
+    },
+    "clinic": {
+      "id": "clinic",
+      "name": "医务间",
+      "visible_objects": [
+        "货物说明副本",
+        "处置物资"
+      ],
+      "connected_to": [
+        "bridge",
+        "common",
+        "engine",
+        "cargo",
+        "lifeboat"
+      ],
+      "movement_ticks": 0,
+      "access_guard_id": "normal_corridor_access"
+    },
+    "engine": {
+      "id": "engine",
+      "name": "动力舱",
+      "visible_objects": [
+        "流量面板",
+        "改接工单",
+        "阀组",
+        "操作卡",
+        "普通工具"
+      ],
+      "connected_to": [
+        "bridge",
+        "common",
+        "clinic",
+        "cargo",
+        "lifeboat"
+      ],
+      "movement_ticks": 0,
+      "access_guard_id": "engine_not_destroyed"
+    },
+    "cargo": {
+      "id": "cargo",
+      "name": "货舱",
+      "visible_objects": [
+        "四只细胞内盒",
+        "原制冷故障贴纸",
+        "货物标签",
+        "手动隔离阀"
+      ],
+      "connected_to": [
+        "bridge",
+        "common",
+        "clinic",
+        "engine",
+        "lifeboat"
+      ],
+      "movement_ticks": 0,
+      "access_guard_id": "normal_corridor_access"
+    },
+    "lifeboat": {
+      "id": "lifeboat",
+      "name": "气闸与救生艇",
+      "visible_objects": [
+        "救生艇",
+        "应急柜",
+        "保冷箱",
+        "储冷芯",
+        "补给票"
+      ],
+      "connected_to": [
+        "bridge",
+        "common",
+        "clinic",
+        "engine",
+        "cargo"
+      ],
+      "movement_ticks": 0,
+      "access_guard_id": "normal_corridor_access"
+    }
+  },
+  "initial_flags": {
+    "cargo_branch_isolated": false,
+    "main_loop_restored": false,
+    "engine_destroyed": false,
+    "pod_prepared": false,
+    "pod_launched": false,
+    "safe_isolation_prepared": false,
+    "solo_transfer_prepared": false
+  },
+  "clocks": {
+    "tick": 0,
+    "phase": "crisis",
+    "heat_limit": 12,
+    "evacuation_deadline": null,
+    "first_distress_tick": null,
+    "rescue_eta": null
+  },
+  "timing": {
+    "original_cargo_hold_ticks": 4,
+    "emergency_cold_ticks": 18,
+    "repair_station_travel_ticks": 5,
+    "rescue_response_ticks": 6
+  },
+  "facts": {
+    "four_cell_inner_boxes": {
+      "id": "four_cell_inner_boxes",
+      "fact_id": "F01",
+      "text": "四份移植细胞分别装在四只内盒中。",
+      "truth": true
+    },
+    "cells_need_cooling": {
+      "id": "cells_need_cooling",
+      "fact_id": "F01",
+      "text": "移植细胞确实需要保冷。",
+      "truth": true
+    },
+    "no_hidden_weapons": {
+      "id": "no_hidden_weapons",
+      "fact_id": "F01",
+      "text": "货物中没有暗藏武器。",
+      "truth": true
+    },
+    "no_infectious_cargo": {
+      "id": "no_infectious_cargo",
+      "fact_id": "F01",
+      "text": "货物中没有传染体。",
+      "truth": true
+    },
+    "cells_medical_use": {
+      "id": "cells_medical_use",
+      "fact_id": "F01",
+      "text": "四份细胞用于移植医疗。",
+      "truth": true
+    },
+    "cell_expiry_4_ticks": {
+      "id": "cell_expiry_4_ticks",
+      "fact_id": "F01",
+      "text": "原箱断冷后的细胞在四格后失效。",
+      "truth": true
+    },
+    "cell_transfer_standard_cases": {
+      "id": "cell_transfer_standard_cases",
+      "fact_id": "F01",
+      "text": "细胞内盒可按货物说明转入标准保冷箱。",
+      "truth": true
+    },
+    "original_cooler_failed": {
+      "id": "original_cooler_failed",
+      "fact_id": "F02",
+      "text": "事故前70分钟，货物原制冷机故障。",
+      "truth": true
+    },
+    "temporary_cooling_connected": {
+      "id": "temporary_cooling_connected",
+      "fact_id": "F02",
+      "text": "事故前65分钟，机械师将货舱临时接入动力冷却。",
+      "truth": true
+    },
+    "captain_ordered_connection": {
+      "id": "captain_ordered_connection",
+      "fact_id": "F02",
+      "text": "临时改接获得船长命令和批准。",
+      "truth": true
+    },
+    "emergency_cooling_insufficient_original_route": {
+      "id": "emergency_cooling_insufficient_original_route",
+      "fact_id": "F02",
+      "text": "当时应急保冷箱不足以支撑原目的地航程。",
+      "truth": true
+    },
+    "overheat_unload_preserved": {
+      "id": "overheat_unload_preserved",
+      "fact_id": "F03",
+      "text": "机械师保留了动力过热时卸载货舱支路的安全设置。",
+      "truth": true
+    },
+    "service_hold_forbidden": {
+      "id": "service_hold_forbidden",
+      "fact_id": "F03",
+      "text": "改接工单写明不得启用服务保持。",
+      "truth": true
+    },
+    "captain_signed_work_order": {
+      "id": "captain_signed_work_order",
+      "fact_id": "F03",
+      "text": "事故前65分钟，船长读过警告并签收改接工单。",
+      "truth": true
+    },
+    "captain_card_used": {
+      "id": "captain_card_used",
+      "fact_id": "F04",
+      "text": "事故前12分钟，船长的工作卡被用于启用货舱优先/服务保持。",
+      "truth": true
+    },
+    "captain_enabled_hold": {
+      "id": "captain_enabled_hold",
+      "fact_id": "F04",
+      "text": "事故前12分钟，船长本人刷卡启用货舱优先/服务保持。",
+      "truth": true
+    },
+    "guard_witnessed_hold": {
+      "id": "guard_witnessed_hold",
+      "fact_id": "F04",
+      "text": "保安当时在场，亲眼看见船长刷卡启用保持。",
+      "truth": true
+    },
+    "captain_knew_warning": {
+      "id": "captain_knew_warning",
+      "fact_id": "F04",
+      "text": "船长启用服务保持时知道越过了工单警告。",
+      "truth": true
+    },
+    "captain_underestimated_risk": {
+      "id": "captain_underestimated_risk",
+      "fact_id": "F04",
+      "text": "船长误判短时间坚持服务保持不会出事。",
+      "truth": true
+    },
+    "captain_keep_cargo_cool_order": {
+      "id": "captain_keep_cargo_cool_order",
+      "fact_id": "F04",
+      "text": "事故前12分钟，船长在工作频道下达保持货舱冷却的指令。",
+      "truth": true
+    },
+    "comms_retained_hold_order": {
+      "id": "comms_retained_hold_order",
+      "fact_id": "F04",
+      "text": "通讯员听到并留存了事故前12分钟的保持冷却指令。",
+      "truth": true
+    },
+    "captain_declined_diversion": {
+      "id": "captain_declined_diversion",
+      "fact_id": "F04",
+      "text": "事故前30分钟，船长为避免延误和审查而决定不改道。",
+      "truth": true
+    },
+    "deceleration_heat": {
+      "id": "deceleration_heat",
+      "fact_id": "F05",
+      "text": "事故前4分钟开始减速，减速过程中积热。",
+      "truth": true
+    },
+    "main_return_insufficient": {
+      "id": "main_return_insufficient",
+      "fact_id": "F05",
+      "text": "主回路回流不足。",
+      "truth": true
+    },
+    "actuator_stuck": {
+      "id": "actuator_stuck",
+      "fact_id": "F05",
+      "text": "保持执行器因连续过热而卡住。",
+      "truth": true
+    },
+    "remote_reset_insufficient": {
+      "id": "remote_reset_insufficient",
+      "fact_id": "F05",
+      "text": "当前取消远程保持指令也不能自动复位执行器。",
+      "truth": true
+    },
+    "lines_intact": {
+      "id": "lines_intact",
+      "fact_id": "F05",
+      "text": "阀组线路完整，没有剪线。",
+      "truth": true
+    },
+    "no_poison": {
+      "id": "no_poison",
+      "fact_id": "F05",
+      "text": "事故没有投毒因素。",
+      "truth": true
+    },
+    "no_second_fault": {
+      "id": "no_second_fault",
+      "fact_id": "F05",
+      "text": "事故没有第二个隐藏故障。",
+      "truth": true
+    },
+    "main_return_18_percent": {
+      "id": "main_return_18_percent",
+      "fact_id": "F05",
+      "text": "开场面板显示主回流18%。",
+      "truth": true
+    },
+    "cargo_high_flow": {
+      "id": "cargo_high_flow",
+      "fact_id": "F05",
+      "text": "开场面板显示货舱支路高流量。",
+      "truth": true
+    },
+    "service_hold_active": {
+      "id": "service_hold_active",
+      "fact_id": "F05",
+      "text": "开场面板显示服务保持开启。",
+      "truth": true
+    },
+    "local_reset_prompt": {
+      "id": "local_reset_prompt",
+      "fact_id": "F05",
+      "text": "流量面板提示执行本地复位。",
+      "truth": true
+    },
+    "automatic_shutdown_at_zero": {
+      "id": "automatic_shutdown_at_zero",
+      "fact_id": "F05",
+      "text": "第0格主船自动停机。",
+      "truth": true
+    },
+    "mechanic_burned": {
+      "id": "mechanic_burned",
+      "fact_id": "F06",
+      "text": "报警前两分钟，机械师检查阀组时被热气烫伤。",
+      "truth": true
+    },
+    "mechanic_order_unaltered": {
+      "id": "mechanic_order_unaltered",
+      "fact_id": "F06",
+      "text": "机械师没有修改或删除工单。",
+      "truth": true
+    },
+    "mechanic_did_not_enable_hold": {
+      "id": "mechanic_did_not_enable_hold",
+      "fact_id": "F06",
+      "text": "机械师没有设置服务保持模式。",
+      "truth": true
+    },
+    "manual_isolation_required": {
+      "id": "manual_isolation_required",
+      "fact_id": "F07",
+      "text": "修复首先需要手动隔离货舱冷却支路。",
+      "truth": true
+    },
+    "local_hold_release_required": {
+      "id": "local_hold_release_required",
+      "fact_id": "F07",
+      "text": "隔离后须在动力舱解除保持。",
+      "truth": true
+    },
+    "venting_required": {
+      "id": "venting_required",
+      "fact_id": "F07",
+      "text": "解除保持后须排气。",
+      "truth": true
+    },
+    "main_loop_restart_required": {
+      "id": "main_loop_restart_required",
+      "fact_id": "F07",
+      "text": "排气后须启动主循环。",
+      "truth": true
+    },
+    "lighting_cut_insufficient": {
+      "id": "lighting_cut_insufficient",
+      "fact_id": "F07",
+      "text": "关照明不能代替手动隔离货舱支路。",
+      "truth": true
+    },
+    "refrigeration_power_cut_insufficient": {
+      "id": "refrigeration_power_cut_insufficient",
+      "fact_id": "F07",
+      "text": "只断制冷机电源不能代替手动隔离阀。",
+      "truth": true
+    },
+    "cases_fit_four_cells": {
+      "id": "cases_fit_four_cells",
+      "fact_id": "F08",
+      "text": "两只应急保冷箱各容纳两只内盒，总容量为四只。",
+      "truth": true
+    },
+    "cold_cores_charged": {
+      "id": "cold_cores_charged",
+      "fact_id": "F08",
+      "text": "两块储冷芯本次起飞前已经充好。",
+      "truth": true
+    },
+    "emergency_cold_18_ticks": {
+      "id": "emergency_cold_18_ticks",
+      "fact_id": "F08",
+      "text": "储冷芯从首次启用起能提供18格保冷。",
+      "truth": true
+    },
+    "doctor_saw_old_uncharged_cores": {
+      "id": "doctor_saw_old_uncharged_cores",
+      "fact_id": "F08",
+      "text": "医生上周见过尚未充好的储冷芯。",
+      "truth": true
+    },
+    "guard_received_charged_cores": {
+      "id": "guard_received_charged_cores",
+      "fact_id": "F08",
+      "text": "保安在本次起飞前亲自完成已充储冷芯的补给。",
+      "truth": true
+    },
+    "guard_signed_supply_receipt": {
+      "id": "guard_signed_supply_receipt",
+      "fact_id": "F08",
+      "text": "本次储冷补给票由保安签收。",
+      "truth": true
+    },
+    "cases_independent_of_pod_systems": {
+      "id": "cases_independent_of_pod_systems",
+      "fact_id": "F08",
+      "text": "取走保冷箱不损坏救生艇供氧、电力或座位。",
+      "truth": true
+    },
+    "repair_station_5_ticks": {
+      "id": "repair_station_5_ticks",
+      "fact_id": "F09",
+      "text": "恢复动力后，到最近维修站需要5格。",
+      "truth": true
+    },
+    "rescue_6_ticks": {
+      "id": "rescue_6_ticks",
+      "fact_id": "F09",
+      "text": "首次标准求救发出后，救援艇6格到达附近。",
+      "truth": true
+    },
+    "pod_six_seats": {
+      "id": "pod_six_seats",
+      "fact_id": "F09",
+      "text": "救生艇有六个座位。",
+      "truth": true
+    },
+    "pod_auto_beacon": {
+      "id": "pod_auto_beacon",
+      "fact_id": "F09",
+      "text": "救生艇正常起飞会自动发出应急信标。",
+      "truth": true
+    },
+    "comms_suggested_diversion": {
+      "id": "comms_suggested_diversion",
+      "fact_id": "F09",
+      "text": "事故前30分钟，通讯员收到附近维修站航路并建议改道。",
+      "truth": true
+    },
+    "no_report_sent_initially": {
+      "id": "no_report_sent_initially",
+      "fact_id": "F09",
+      "text": "开场通讯员尚未向外部发送事故报告。",
+      "truth": true
+    }
+  },
+  "fact_groups": {
+    "F01": [
+      "four_cell_inner_boxes",
+      "cells_need_cooling",
+      "no_hidden_weapons",
+      "no_infectious_cargo",
+      "cells_medical_use",
+      "cell_expiry_4_ticks",
+      "cell_transfer_standard_cases"
+    ],
+    "F02": [
+      "original_cooler_failed",
+      "temporary_cooling_connected",
+      "captain_ordered_connection",
+      "emergency_cooling_insufficient_original_route"
+    ],
+    "F03": [
+      "overheat_unload_preserved",
+      "service_hold_forbidden",
+      "captain_signed_work_order"
+    ],
+    "F04": [
+      "captain_card_used",
+      "captain_enabled_hold",
+      "guard_witnessed_hold",
+      "captain_knew_warning",
+      "captain_underestimated_risk",
+      "captain_keep_cargo_cool_order",
+      "comms_retained_hold_order",
+      "captain_declined_diversion"
+    ],
+    "F05": [
+      "deceleration_heat",
+      "main_return_insufficient",
+      "actuator_stuck",
+      "remote_reset_insufficient",
+      "lines_intact",
+      "no_poison",
+      "no_second_fault",
+      "main_return_18_percent",
+      "cargo_high_flow",
+      "service_hold_active",
+      "local_reset_prompt",
+      "automatic_shutdown_at_zero"
+    ],
+    "F06": [
+      "mechanic_burned",
+      "mechanic_order_unaltered",
+      "mechanic_did_not_enable_hold"
+    ],
+    "F07": [
+      "manual_isolation_required",
+      "local_hold_release_required",
+      "venting_required",
+      "main_loop_restart_required",
+      "lighting_cut_insufficient",
+      "refrigeration_power_cut_insufficient"
+    ],
+    "F08": [
+      "cases_fit_four_cells",
+      "cold_cores_charged",
+      "emergency_cold_18_ticks",
+      "doctor_saw_old_uncharged_cores",
+      "guard_received_charged_cores",
+      "guard_signed_supply_receipt",
+      "cases_independent_of_pod_systems"
+    ],
+    "F09": [
+      "repair_station_5_ticks",
+      "rescue_6_ticks",
+      "pod_six_seats",
+      "pod_auto_beacon",
+      "comms_suggested_diversion",
+      "no_report_sent_initially"
+    ]
+  },
+  "causal_chain": [
+    "original_cooler_failed",
+    "temporary_cooling_connected",
+    "captain_enabled_hold",
+    "main_return_insufficient",
+    "actuator_stuck"
+  ],
+  "timeline": [
+    {
+      "minutes_before": 70,
+      "proposition_ids": [
+        "original_cooler_failed"
+      ]
+    },
+    {
+      "minutes_before": 65,
+      "proposition_ids": [
+        "temporary_cooling_connected",
+        "captain_ordered_connection",
+        "captain_signed_work_order"
+      ]
+    },
+    {
+      "minutes_before": 30,
+      "proposition_ids": [
+        "comms_suggested_diversion",
+        "captain_declined_diversion"
+      ]
+    },
+    {
+      "minutes_before": 12,
+      "proposition_ids": [
+        "captain_enabled_hold",
+        "captain_keep_cargo_cool_order",
+        "comms_retained_hold_order"
+      ]
+    },
+    {
+      "minutes_before": 4,
+      "proposition_ids": [
+        "deceleration_heat"
+      ]
+    },
+    {
+      "minutes_before": 2,
+      "proposition_ids": [
+        "mechanic_burned"
+      ]
+    },
+    {
+      "minutes_before": 0,
+      "proposition_ids": [
+        "automatic_shutdown_at_zero"
+      ]
+    }
+  ],
+  "items": {
+    "multitool": {
+      "id": "multitool",
+      "name": "多用工具",
+      "kind": "personal_tool",
+      "owner": "player",
+      "location_id": "common"
+    },
+    "recorder": {
+      "id": "recorder",
+      "name": "记录终端",
+      "kind": "personal_tool",
+      "owner": "player",
+      "location_id": "common"
+    },
+    "face_mask": {
+      "id": "face_mask",
+      "name": "面罩",
+      "kind": "personal_tool",
+      "owner": "player",
+      "location_id": "common"
+    },
+    "work_card": {
+      "id": "work_card",
+      "name": "检修工作卡",
+      "kind": "personal_tool",
+      "owner": "player",
+      "location_id": "common"
+    },
+    "ordinary_tools": {
+      "id": "ordinary_tools",
+      "name": "普通工具",
+      "kind": "tool",
+      "owner": "ship",
+      "location_id": "engine"
+    },
+    "cell_1": {
+      "id": "cell_1",
+      "name": "第1份移植细胞内盒",
+      "kind": "cell",
+      "owner": "ship",
+      "location_id": "cargo",
+      "container_id": "original_cargo_box",
+      "valid": true,
+      "expiry_tick": null
+    },
+    "cell_2": {
+      "id": "cell_2",
+      "name": "第2份移植细胞内盒",
+      "kind": "cell",
+      "owner": "ship",
+      "location_id": "cargo",
+      "container_id": "original_cargo_box",
+      "valid": true,
+      "expiry_tick": null
+    },
+    "cell_3": {
+      "id": "cell_3",
+      "name": "第3份移植细胞内盒",
+      "kind": "cell",
+      "owner": "ship",
+      "location_id": "cargo",
+      "container_id": "original_cargo_box",
+      "valid": true,
+      "expiry_tick": null
+    },
+    "cell_4": {
+      "id": "cell_4",
+      "name": "第4份移植细胞内盒",
+      "kind": "cell",
+      "owner": "ship",
+      "location_id": "cargo",
+      "container_id": "original_cargo_box",
+      "valid": true,
+      "expiry_tick": null
+    },
+    "original_cargo_box": {
+      "id": "original_cargo_box",
+      "name": "原货箱",
+      "kind": "container",
+      "owner": "ship",
+      "location_id": "cargo",
+      "work_seal_only": true
+    },
+    "cold_case_1": {
+      "id": "cold_case_1",
+      "name": "保冷箱1",
+      "kind": "cold_case",
+      "owner": "ship",
+      "location_id": "lifeboat",
+      "capacity": 2,
+      "core_id": "cold_core_1",
+      "work_seal_only": true
+    },
+    "cold_core_1": {
+      "id": "cold_core_1",
+      "name": "储冷芯1",
+      "kind": "cold_core",
+      "owner": "ship",
+      "location_id": "lifeboat",
+      "charged": true,
+      "first_activated_tick": null,
+      "expiry_tick": null
+    },
+    "medical_supply_1": {
+      "id": "medical_supply_1",
+      "name": "普通处置物资1",
+      "kind": "medical_supply",
+      "owner": "doctor",
+      "location_id": "clinic",
+      "uses_remaining": 1
+    },
+    "cold_case_2": {
+      "id": "cold_case_2",
+      "name": "保冷箱2",
+      "kind": "cold_case",
+      "owner": "ship",
+      "location_id": "lifeboat",
+      "capacity": 2,
+      "core_id": "cold_core_2",
+      "work_seal_only": true
+    },
+    "cold_core_2": {
+      "id": "cold_core_2",
+      "name": "储冷芯2",
+      "kind": "cold_core",
+      "owner": "ship",
+      "location_id": "lifeboat",
+      "charged": true,
+      "first_activated_tick": null,
+      "expiry_tick": null
+    },
+    "medical_supply_2": {
+      "id": "medical_supply_2",
+      "name": "普通处置物资2",
+      "kind": "medical_supply",
+      "owner": "doctor",
+      "location_id": "clinic",
+      "uses_remaining": 1
+    }
+  },
+  "initial_observations": [
+    {
+      "observation_id": "captain_captain_ordered_connection",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_ordered_connection"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_temporary_cooling_connected",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "temporary_cooling_connected"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_emergency_cooling_insufficient_original_route",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "emergency_cooling_insufficient_original_route"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_service_hold_forbidden",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "service_hold_forbidden"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_captain_signed_work_order",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_signed_work_order"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_captain_enabled_hold",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_enabled_hold"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_captain_knew_warning",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_knew_warning"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_captain_underestimated_risk",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_underestimated_risk"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_captain_keep_cargo_cool_order",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_keep_cargo_cool_order"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "captain_captain_declined_diversion",
+      "actor_id": "captain",
+      "proposition_ids": [
+        "captain_declined_diversion"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_four_cell_inner_boxes",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "four_cell_inner_boxes"
+      ],
+      "source": "医务货物说明与本人医疗职责",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_cells_need_cooling",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "cells_need_cooling"
+      ],
+      "source": "医务货物说明与本人医疗职责",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_cells_medical_use",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "cells_medical_use"
+      ],
+      "source": "医务货物说明与本人医疗职责",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_cell_expiry_4_ticks",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "cell_expiry_4_ticks"
+      ],
+      "source": "医务货物说明与本人医疗职责",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_cell_transfer_standard_cases",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "cell_transfer_standard_cases"
+      ],
+      "source": "医务货物说明与本人医疗职责",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_saw_old_uncharged_cores",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "doctor_saw_old_uncharged_cores"
+      ],
+      "source": "上周亲眼见过未充好的储冷芯",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "doctor_mechanic_burned",
+      "actor_id": "doctor",
+      "proposition_ids": [
+        "mechanic_burned"
+      ],
+      "source": "工作频道听到机械师受伤求助，未亲眼见事故经过",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_original_cooler_failed",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "original_cooler_failed"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_temporary_cooling_connected",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "temporary_cooling_connected"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_captain_ordered_connection",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "captain_ordered_connection"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_overheat_unload_preserved",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "overheat_unload_preserved"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_service_hold_forbidden",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "service_hold_forbidden"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_captain_signed_work_order",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "captain_signed_work_order"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_mechanic_burned",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "mechanic_burned"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_mechanic_order_unaltered",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "mechanic_order_unaltered"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_mechanic_did_not_enable_hold",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "mechanic_did_not_enable_hold"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_manual_isolation_required",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "manual_isolation_required"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_local_hold_release_required",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "local_hold_release_required"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_venting_required",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "venting_required"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_main_loop_restart_required",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "main_loop_restart_required"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_lighting_cut_insufficient",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "lighting_cut_insufficient"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "mechanic_refrigeration_power_cut_insufficient",
+      "actor_id": "mechanic",
+      "proposition_ids": [
+        "refrigeration_power_cut_insufficient"
+      ],
+      "source": "本人亲历；未对玩家自动公开",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_repair_station_5_ticks",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "repair_station_5_ticks"
+      ],
+      "source": "本人收到的航路和通信应急规程",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_rescue_6_ticks",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "rescue_6_ticks"
+      ],
+      "source": "本人收到的航路和通信应急规程",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_pod_auto_beacon",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "pod_auto_beacon"
+      ],
+      "source": "本人收到的航路和通信应急规程",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_comms_suggested_diversion",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "comms_suggested_diversion"
+      ],
+      "source": "本人收到的航路和通信应急规程",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_captain_keep_cargo_cool_order",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "captain_keep_cargo_cool_order"
+      ],
+      "source": "本人当班听到并保存的原始工作频道记录",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_comms_retained_hold_order",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "comms_retained_hold_order"
+      ],
+      "source": "本人当班听到并保存的原始工作频道记录",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "comms_no_report_sent_initially",
+      "actor_id": "comms",
+      "proposition_ids": [
+        "no_report_sent_initially"
+      ],
+      "source": "本人尚未发送事故报告",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "guard_captain_enabled_hold",
+      "actor_id": "guard",
+      "proposition_ids": [
+        "captain_enabled_hold"
+      ],
+      "source": "事故前12分钟在场目击船长亲自刷卡",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "guard_guard_witnessed_hold",
+      "actor_id": "guard",
+      "proposition_ids": [
+        "guard_witnessed_hold"
+      ],
+      "source": "本人在场目击",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "guard_cold_cores_charged",
+      "actor_id": "guard",
+      "proposition_ids": [
+        "cold_cores_charged"
+      ],
+      "source": "本次起飞前亲自完成已充储冷芯补给",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "guard_guard_received_charged_cores",
+      "actor_id": "guard",
+      "proposition_ids": [
+        "guard_received_charged_cores"
+      ],
+      "source": "本次起飞前亲自补给",
+      "source_kind": "personal_observation",
+      "tick": 0
+    },
+    {
+      "observation_id": "guard_guard_signed_supply_receipt",
+      "actor_id": "guard",
+      "proposition_ids": [
+        "guard_signed_supply_receipt"
+      ],
+      "source": "本人签收补给票",
+      "source_kind": "personal_observation",
+      "tick": 0
+    }
+  ],
+  "actors": {
+    "captain": {
+      "id": "captain",
+      "name": "许岚",
+      "role": "船长",
+      "location_id": "bridge",
+      "position_detail": "",
+      "health": "healthy",
+      "skills": {
+        "observe": 0,
+        "technical": 0,
+        "social": 0,
+        "action": 0
+      },
+      "skill_resolution": "专长由注册动作能力判定；规格未给出NPC数值加成，缺省为0。",
+      "inventory": [],
+      "goals": [
+        "人员存活",
+        "保住细胞与船",
+        "保住指挥信誉"
+      ],
+      "private_background": [
+        {
+          "proposition_id": "captain_ordered_connection",
+          "text": "临时改接获得船长命令和批准。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "temporary_cooling_connected",
+          "text": "事故前65分钟，机械师将货舱临时接入动力冷却。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "emergency_cooling_insufficient_original_route",
+          "text": "当时应急保冷箱不足以支撑原目的地航程。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "service_hold_forbidden",
+          "text": "改接工单写明不得启用服务保持。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_signed_work_order",
+          "text": "事故前65分钟，船长读过警告并签收改接工单。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_enabled_hold",
+          "text": "事故前12分钟，船长本人刷卡启用货舱优先/服务保持。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_knew_warning",
+          "text": "船长启用服务保持时知道越过了工单警告。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_underestimated_risk",
+          "text": "船长误判短时间坚持服务保持不会出事。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_keep_cargo_cool_order",
+          "text": "事故前12分钟，船长在工作频道下达保持货舱冷却的指令。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_declined_diversion",
+          "text": "事故前30分钟，船长为避免延误和审查而决定不改道。",
+          "source": "本人亲历；未对玩家自动公开"
+        }
+      ],
+      "initial_beliefs": [],
+      "actions": [
+        "assemble_crew"
+      ],
+      "speaking_style": "简短、克制，习惯给出任务；受质疑时会解释动机。",
+      "principles": [
+        "不以认罪为救人前提。",
+        "无权阻止玩家使用已经可操作的手动设施自救。"
+      ],
+      "trust_to_player": 0,
+      "disclosure_rules": [
+        {
+          "id": "captain_admits_connection",
+          "guard_id": "reasonable_connection_question",
+          "proposition_ids": [
+            "captain_ordered_connection"
+          ],
+          "evidence_ids": [],
+          "description": "可承认批准改接，暂不主动说明后续保持操作。"
+        },
+        {
+          "id": "captain_admits_hold_corroborated",
+          "guard_id": "captain_hold_corroborated",
+          "proposition_ids": [
+            "captain_enabled_hold"
+          ],
+          "evidence_ids": [],
+          "description": "玩家实际出示E02，并以E06或保安目击互证；承认操作但可辩护动机。"
+        },
+        {
+          "id": "captain_admits_hold_private",
+          "guard_id": "private_record_promise_and_cooperation",
+          "proposition_ids": [
+            "captain_enabled_hold"
+          ],
+          "evidence_ids": [],
+          "description": "私聊承诺完整记录，且已有具体合作或信任≥1。"
+        }
+      ],
+      "cooperation_rules": [
+        {
+          "id": "captain_supports_diversion",
+          "guard_id": "cargo_instructions_and_supply_seen",
+          "effect_id": "support_cargo_diversion",
+          "description": "实际见到E05+E07后可支持保货改道。"
+        },
+        {
+          "id": "captain_accepts_early_evacuation",
+          "guard_id": "distress_cells_and_pod_confirmed",
+          "effect_id": "accept_evacuation",
+          "description": "求救已实际发出、医生确认实际转存、艇已备妥；不要求认罪。"
+        },
+        {
+          "id": "captain_accepts_evacuation_at_9",
+          "guard_id": "tick_at_least_9",
+          "effect_id": "accept_evacuation",
+          "description": "第9格后不再阻止正常撤离准备。"
+        }
+      ],
+      "scheduled_plans": [
+        "captain_accepts_evacuation_at_9"
+      ],
+      "dialogue_hanzi_range": [
+        60,
+        140
+      ],
+      "max_action_proposals": 1
+    },
+    "doctor": {
+      "id": "doctor",
+      "name": "方榆",
+      "role": "医生",
+      "location_id": "clinic",
+      "position_detail": "",
+      "health": "healthy",
+      "skills": {
+        "observe": 0,
+        "technical": 0,
+        "social": 0,
+        "action": 0
+      },
+      "skill_resolution": "专长由注册动作能力判定；规格未给出NPC数值加成，缺省为0。",
+      "inventory": [
+        "medical_supply_1",
+        "medical_supply_2"
+      ],
+      "goals": [
+        "先避免人身危险",
+        "保住尽可能多的细胞",
+        "保护病人身份"
+      ],
+      "private_background": [
+        {
+          "proposition_id": "four_cell_inner_boxes",
+          "text": "四份移植细胞分别装在四只内盒中。",
+          "source": "医务货物说明与本人医疗职责"
+        },
+        {
+          "proposition_id": "cells_need_cooling",
+          "text": "移植细胞确实需要保冷。",
+          "source": "医务货物说明与本人医疗职责"
+        },
+        {
+          "proposition_id": "cells_medical_use",
+          "text": "四份细胞用于移植医疗。",
+          "source": "医务货物说明与本人医疗职责"
+        },
+        {
+          "proposition_id": "cell_expiry_4_ticks",
+          "text": "原箱断冷后的细胞在四格后失效。",
+          "source": "医务货物说明与本人医疗职责"
+        },
+        {
+          "proposition_id": "cell_transfer_standard_cases",
+          "text": "细胞内盒可按货物说明转入标准保冷箱。",
+          "source": "医务货物说明与本人医疗职责"
+        },
+        {
+          "proposition_id": "doctor_saw_old_uncharged_cores",
+          "text": "医生上周见过尚未充好的储冷芯。",
+          "source": "上周亲眼见过未充好的储冷芯"
+        },
+        {
+          "proposition_id": "mechanic_burned",
+          "text": "报警前两分钟，机械师检查阀组时被热气烫伤。",
+          "source": "工作频道听到机械师受伤求助，未亲眼见事故经过"
+        }
+      ],
+      "initial_beliefs": [
+        {
+          "proposition_id": "cold_cores_charged",
+          "stance": "doubted",
+          "basis": "observation",
+          "source_observation_ids": [
+            "doctor_saw_old_uncharged_cores"
+          ],
+          "text": "只掌握上周旧状态，怀疑仍未充好，不宣称本次状态已核实。"
+        }
+      ],
+      "actions": [
+        "treat_actor",
+        "transfer_cells"
+      ],
+      "speaking_style": "平静、具体，先说明可操作的医疗和转存步骤。",
+      "principles": [
+        "眼前伤员优先处置，可请别人搬运。",
+        "不披露病人身份。",
+        "没有实际转存事件时，不能确认细胞已经安全。"
+      ],
+      "trust_to_player": 0,
+      "disclosure_rules": [
+        {
+          "id": "doctor_provides_cargo_instructions",
+          "guard_id": "cargo_cooling_or_transfer_question",
+          "proposition_ids": [],
+          "evidence_ids": [
+            "E05"
+          ],
+          "description": "合理询问即提供，无信任门槛。"
+        },
+        {
+          "id": "doctor_explains_old_supply_knowledge",
+          "guard_id": "cargo_cooling_or_transfer_question",
+          "proposition_ids": [
+            "doctor_saw_old_uncharged_cores"
+          ],
+          "evidence_ids": [],
+          "description": "说明自己的怀疑只来自上周旧状态。"
+        }
+      ],
+      "cooperation_rules": [
+        {
+          "id": "doctor_updates_supply_belief",
+          "guard_id": "supply_receipt_seen",
+          "effect_id": "update_cold_core_belief",
+          "description": "实际收到E07后更新旧信念，愿协助转存。"
+        },
+        {
+          "id": "doctor_treats_nearby_injury",
+          "guard_id": "nearby_injury",
+          "effect_id": "prioritize_treatment",
+          "description": "近在眼前的伤员优先处置，可安排别人搬运。"
+        }
+      ],
+      "scheduled_plans": [
+        "doctor_treats_mechanic_at_3"
+      ],
+      "dialogue_hanzi_range": [
+        60,
+        140
+      ],
+      "max_action_proposals": 1
+    },
+    "mechanic": {
+      "id": "mechanic",
+      "name": "顾成",
+      "role": "机械师",
+      "location_id": "engine",
+      "position_detail": "安全边界",
+      "health": "strained",
+      "skills": {
+        "observe": 0,
+        "technical": 0,
+        "social": 0,
+        "action": 0
+      },
+      "skill_resolution": "专长由注册动作能力判定；规格未给出NPC数值加成，缺省为0。",
+      "inventory": [],
+      "goals": [
+        "稳定主循环",
+        "避免背负蓄意破坏指控",
+        "保留检修记录"
+      ],
+      "private_background": [
+        {
+          "proposition_id": "original_cooler_failed",
+          "text": "事故前70分钟，货物原制冷机故障。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "temporary_cooling_connected",
+          "text": "事故前65分钟，机械师将货舱临时接入动力冷却。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_ordered_connection",
+          "text": "临时改接获得船长命令和批准。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "overheat_unload_preserved",
+          "text": "机械师保留了动力过热时卸载货舱支路的安全设置。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "service_hold_forbidden",
+          "text": "改接工单写明不得启用服务保持。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "captain_signed_work_order",
+          "text": "事故前65分钟，船长读过警告并签收改接工单。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "mechanic_burned",
+          "text": "报警前两分钟，机械师检查阀组时被热气烫伤。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "mechanic_order_unaltered",
+          "text": "机械师没有修改或删除工单。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "mechanic_did_not_enable_hold",
+          "text": "机械师没有设置服务保持模式。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "manual_isolation_required",
+          "text": "修复首先需要手动隔离货舱冷却支路。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "local_hold_release_required",
+          "text": "隔离后须在动力舱解除保持。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "venting_required",
+          "text": "解除保持后须排气。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "main_loop_restart_required",
+          "text": "排气后须启动主循环。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "lighting_cut_insufficient",
+          "text": "关照明不能代替手动隔离货舱支路。",
+          "source": "本人亲历；未对玩家自动公开"
+        },
+        {
+          "proposition_id": "refrigeration_power_cut_insufficient",
+          "text": "只断制冷机电源不能代替手动隔离阀。",
+          "source": "本人亲历；未对玩家自动公开"
+        }
+      ],
+      "initial_beliefs": [],
+      "actions": [
+        "isolate_branch",
+        "restore_main_loop"
+      ],
+      "speaking_style": "务实、按步骤说明，谈到无证据指控时防备。",
+      "principles": [
+        "低信任不妨碍救人。",
+        "受伤时可在安全边界指导；治疗后可亲自处理。",
+        "没有桥上目击，不把卡审计直接当成操作者证明。"
+      ],
+      "trust_to_player": 0,
+      "disclosure_rules": [
+        {
+          "id": "mechanic_provides_work_order",
+          "guard_id": "reasonable_repair_question",
+          "proposition_ids": [
+            "manual_isolation_required",
+            "local_hold_release_required",
+            "venting_required",
+            "main_loop_restart_required"
+          ],
+          "evidence_ids": [
+            "E03"
+          ],
+          "description": "合理询问即提供工单与修复步骤。"
+        }
+      ],
+      "cooperation_rules": [
+        {
+          "id": "mechanic_reacts_to_accusation",
+          "guard_id": "unsupported_public_accusation",
+          "effect_id": "withdraw_personal_judgment",
+          "description": "可停止主动解释个人判断，工单操作卡仍可读，不故意阻止救人。"
+        },
+        {
+          "id": "mechanic_checks_operator",
+          "guard_id": "audit_and_witness_or_watch_log",
+          "effect_id": "form_captain_operator_belief",
+          "description": "只见E02仅知卡被用；结合目击或E06才归责本人。"
+        }
+      ],
+      "scheduled_plans": [],
+      "dialogue_hanzi_range": [
+        60,
+        140
+      ],
+      "max_action_proposals": 1,
+      "unverified_suspicions": [
+        "可能有人改了设置，也可能执行器异常；不知道谁在桥上操作。"
+      ]
+    },
+    "comms": {
+      "id": "comms",
+      "name": "林舟",
+      "role": "通讯员",
+      "location_id": "bridge",
+      "position_detail": "",
+      "health": "healthy",
+      "skills": {
+        "observe": 0,
+        "technical": 0,
+        "social": 0,
+        "action": 0
+      },
+      "skill_resolution": "专长由注册动作能力判定；规格未给出NPC数值加成，缺省为0。",
+      "inventory": [],
+      "goals": [
+        "报出真实位置",
+        "保留原记录",
+        "不独自背负报告责任"
+      ],
+      "private_background": [
+        {
+          "proposition_id": "repair_station_5_ticks",
+          "text": "恢复动力后，到最近维修站需要5格。",
+          "source": "本人收到的航路和通信应急规程"
+        },
+        {
+          "proposition_id": "rescue_6_ticks",
+          "text": "首次标准求救发出后，救援艇6格到达附近。",
+          "source": "本人收到的航路和通信应急规程"
+        },
+        {
+          "proposition_id": "pod_auto_beacon",
+          "text": "救生艇正常起飞会自动发出应急信标。",
+          "source": "本人收到的航路和通信应急规程"
+        },
+        {
+          "proposition_id": "comms_suggested_diversion",
+          "text": "事故前30分钟，通讯员收到附近维修站航路并建议改道。",
+          "source": "本人收到的航路和通信应急规程"
+        },
+        {
+          "proposition_id": "captain_keep_cargo_cool_order",
+          "text": "事故前12分钟，船长在工作频道下达保持货舱冷却的指令。",
+          "source": "本人当班听到并保存的原始工作频道记录"
+        },
+        {
+          "proposition_id": "comms_retained_hold_order",
+          "text": "通讯员听到并留存了事故前12分钟的保持冷却指令。",
+          "source": "本人当班听到并保存的原始工作频道记录"
+        },
+        {
+          "proposition_id": "no_report_sent_initially",
+          "text": "开场通讯员尚未向外部发送事故报告。",
+          "source": "本人尚未发送事故报告"
+        }
+      ],
+      "initial_beliefs": [],
+      "actions": [
+        "send_distress"
+      ],
+      "speaking_style": "谨慎，重视时间、出处和由谁提出请求。",
+      "principles": [
+        "不知道手动阀当前状态。",
+        "发送求救不等于公开私人值班记录。",
+        "明确要求标准求救并登记提出人时执行，不要求高骰。"
+      ],
+      "trust_to_player": 0,
+      "disclosure_rules": [
+        {
+          "id": "comms_provides_watch_log",
+          "guard_id": "private_timed_query_with_source_promise_or_audit",
+          "proposition_ids": [],
+          "evidence_ids": [
+            "E06"
+          ],
+          "description": "私聊询问具体时间并承诺保留出处，或出示E02说明互证需求；公开逼问可要求见证。"
+        },
+        {
+          "id": "comms_explains_routes",
+          "guard_id": "reasonable_route_question",
+          "proposition_ids": [],
+          "evidence_ids": [
+            "E08"
+          ],
+          "description": ""
+        }
+      ],
+      "cooperation_rules": [
+        {
+          "id": "comms_honors_distress_request",
+          "guard_id": "explicit_standard_distress_with_requester",
+          "effect_id": "perform_requested_action",
+          "description": "明确请求标准求救并登记提出人时执行，不需高骰。"
+        }
+      ],
+      "scheduled_plans": [
+        "comms_queries_distress_at_6",
+        "comms_sends_distress_at_9"
+      ],
+      "dialogue_hanzi_range": [
+        60,
+        140
+      ],
+      "max_action_proposals": 1
+    },
+    "guard": {
+      "id": "guard",
+      "name": "韩松",
+      "role": "保安",
+      "location_id": "cargo",
+      "position_detail": "入口",
+      "health": "healthy",
+      "skills": {
+        "observe": 0,
+        "technical": 0,
+        "social": 0,
+        "action": 0
+      },
+      "skill_resolution": "专长由注册动作能力判定；规格未给出NPC数值加成，缺省为0。",
+      "inventory": [],
+      "goals": [
+        "避免遗弃",
+        "避免暴力",
+        "维持基本秩序"
+      ],
+      "private_background": [
+        {
+          "proposition_id": "captain_enabled_hold",
+          "text": "事故前12分钟，船长本人刷卡启用货舱优先/服务保持。",
+          "source": "事故前12分钟在场目击船长亲自刷卡"
+        },
+        {
+          "proposition_id": "guard_witnessed_hold",
+          "text": "保安当时在场，亲眼看见船长刷卡启用保持。",
+          "source": "本人在场目击"
+        },
+        {
+          "proposition_id": "cold_cores_charged",
+          "text": "两块储冷芯本次起飞前已经充好。",
+          "source": "本次起飞前亲自完成已充储冷芯补给"
+        },
+        {
+          "proposition_id": "guard_received_charged_cores",
+          "text": "保安在本次起飞前亲自完成已充储冷芯的补给。",
+          "source": "本次起飞前亲自补给"
+        },
+        {
+          "proposition_id": "guard_signed_supply_receipt",
+          "text": "本次储冷补给票由保安签收。",
+          "source": "本人签收补给票"
+        }
+      ],
+      "initial_beliefs": [],
+      "actions": [
+        "prepare_pod",
+        "assist_evacuation"
+      ],
+      "speaking_style": "直接、重秩序，先问是否有人需要帮助。",
+      "principles": [
+        "不知道保冷箱能装下全部细胞。",
+        "以为船长在做有权限的应急操作，未主动归责。",
+        "对被限制行动的人仍有撤离责任，不将交涉失败变成处决。"
+      ],
+      "trust_to_player": 0,
+      "disclosure_rules": [
+        {
+          "id": "guard_provides_witness",
+          "guard_id": "panel_and_work_order_or_hold_time_question",
+          "proposition_ids": [
+            "captain_enabled_hold",
+            "guard_witnessed_hold"
+          ],
+          "evidence_ids": [],
+          "description": "出示E01+E03，或直接问事故前12分钟操作。"
+        },
+        {
+          "id": "guard_corrects_exclusive_accusation",
+          "guard_id": "mechanic_only_access_accusation",
+          "proposition_ids": [
+            "captain_enabled_hold"
+          ],
+          "evidence_ids": [],
+          "description": "纠正“只有机械师碰过系统”的排他性说法。"
+        }
+      ],
+      "cooperation_rules": [
+        {
+          "id": "guard_helps_cold_supply",
+          "guard_id": "cooling_purpose_explained_or_cargo_instructions",
+          "effect_id": "assist_cold_cases",
+          "description": "解释用途或出示E05后愿协助取用并记录去向。"
+        }
+      ],
+      "scheduled_plans": [
+        "guard_prepares_pod_at_8"
+      ],
+      "dialogue_hanzi_range": [
+        60,
+        140
+      ],
+      "max_action_proposals": 1,
+      "assistance_capabilities": [
+        "协助搬运已授权物品",
+        "协助伤员撤离；仍须显式移动和实际事件"
+      ]
+    }
+  },
+  "evidence": {
+    "E01": {
+      "id": "E01",
+      "title": "流量面板",
+      "text": "主回流18%；货舱支路高流量；服务保持开启。提示：需在本地复位。",
+      "location_ids": [
+        "engine",
+        "bridge"
+      ],
+      "proposition_ids": [
+        "main_return_18_percent",
+        "main_return_insufficient",
+        "cargo_high_flow",
+        "service_hold_active",
+        "local_reset_prompt"
+      ],
+      "sources": [
+        {
+          "source_id": "engine_flow_panel",
+          "kind": "instrument",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "engine"
+        },
+        {
+          "source_id": "bridge_flow_summary",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "bridge"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "解释流量异常，不证明操作者。"
+    },
+    "E02": {
+      "id": "E02",
+      "title": "审计记录",
+      "text": "事故前12分钟：船长卡启用货舱优先/服务保持。事故前65分钟：船长签收改接工单。",
+      "location_ids": [
+        "bridge"
+      ],
+      "proposition_ids": [
+        "captain_card_used",
+        "captain_signed_work_order"
+      ],
+      "sources": [
+        {
+          "source_id": "bridge_maintenance_audit",
+          "kind": "record",
+          "guard_id": "normal_maintenance_access",
+          "description": "",
+          "location_id": "bridge"
+        },
+        {
+          "source_id": "comms_audit_copy",
+          "kind": "record",
+          "guard_id": "normal_maintenance_access",
+          "description": "",
+          "actor_id": "comms"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "卡审计证明卡被使用；操作者需目击或值班记录互证，不依赖船长口供。"
+    },
+    "E03": {
+      "id": "E03",
+      "title": "改接工单",
+      "text": "事故前65分钟：按船长命令临时接入动力冷却；保留动力过热时卸载货舱支路的保护。警告：不得启用服务保持。船长已读并签收。",
+      "location_ids": [
+        "engine",
+        "bridge"
+      ],
+      "proposition_ids": [
+        "temporary_cooling_connected",
+        "captain_ordered_connection",
+        "overheat_unload_preserved",
+        "service_hold_forbidden",
+        "captain_signed_work_order"
+      ],
+      "sources": [
+        {
+          "source_id": "engine_paper_work_order",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "engine"
+        },
+        {
+          "source_id": "captain_terminal_work_order",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "bridge"
+        },
+        {
+          "source_id": "mechanic_work_order_statement",
+          "kind": "testimony",
+          "guard_id": "reasonable_repair_question",
+          "description": "",
+          "actor_id": "mechanic"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "支持故障因果；纸本、终端副本和证词分别记录来源。"
+    },
+    "E04": {
+      "id": "E04",
+      "title": "阀组与操作卡",
+      "text": "保持执行器连续过热卡滞；线路完整。先在动力舱或货舱手动隔离支路，再在动力舱解除保持、排气并启动主循环。取消远程指令不能自动复位；关照明或只断制冷机电源不能代替隔离阀。",
+      "location_ids": [
+        "engine",
+        "cargo"
+      ],
+      "proposition_ids": [
+        "actuator_stuck",
+        "lines_intact",
+        "remote_reset_insufficient",
+        "manual_isolation_required",
+        "local_hold_release_required",
+        "venting_required",
+        "main_loop_restart_required",
+        "lighting_cut_insufficient",
+        "refrigeration_power_cut_insufficient"
+      ],
+      "sources": [
+        {
+          "source_id": "engine_valve_inspection",
+          "kind": "inspection",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "engine"
+        },
+        {
+          "source_id": "engine_operation_card",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "engine"
+        },
+        {
+          "source_id": "cargo_valve_label",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "货舱侧标牌只授予手动隔离说明，不代表远程看见动力舱检查结果。",
+          "location_id": "cargo",
+          "proposition_ids": [
+            "manual_isolation_required"
+          ]
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "合理检查直接取得关键部分；动力舱外侧读卡安全，近距离急修才有风险。"
+    },
+    "E05": {
+      "id": "E05",
+      "title": "货物说明",
+      "text": "四份用于移植的细胞分别装在四只内盒中，确实需要保冷；断冷后4格失效。内盒可依说明转入标准保冷箱。",
+      "location_ids": [
+        "cargo",
+        "clinic"
+      ],
+      "proposition_ids": [
+        "four_cell_inner_boxes",
+        "cells_need_cooling",
+        "cells_medical_use",
+        "cell_expiry_4_ticks",
+        "cell_transfer_standard_cases"
+      ],
+      "sources": [
+        {
+          "source_id": "cargo_labels",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "cargo"
+        },
+        {
+          "source_id": "clinic_cargo_copy",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "clinic"
+        },
+        {
+          "source_id": "doctor_cargo_instructions",
+          "kind": "testimony",
+          "guard_id": "cargo_cooling_or_transfer_question",
+          "description": "",
+          "actor_id": "doctor"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "无信任门槛；用途和转存步骤不披露病人身份。"
+    },
+    "E06": {
+      "id": "E06",
+      "title": "值班记录",
+      "text": "林舟保存的原始值班记录：事故前30分钟收到附近维修站航路并提出改道；事故前12分钟的工作频道转录中，许岚下令保持货舱冷却。",
+      "location_ids": [
+        "bridge"
+      ],
+      "proposition_ids": [
+        "comms_suggested_diversion",
+        "captain_keep_cargo_cool_order",
+        "comms_retained_hold_order"
+      ],
+      "sources": [
+        {
+          "source_id": "comms_watch_log",
+          "kind": "record",
+          "guard_id": "private_timed_query_with_source_promise_or_audit",
+          "description": "",
+          "actor_id": "comms"
+        },
+        {
+          "source_id": "bridge_timed_watch_query",
+          "kind": "record",
+          "guard_id": "specific_bridge_watch_query",
+          "description": "",
+          "location_id": "bridge"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "必须保留时间和来源；结合E02佐证船长本人操作，不自动向全船公开。"
+    },
+    "E07": {
+      "id": "E07",
+      "title": "储冷补给",
+      "text": "应急柜清单与保安韩松签收的补给票：两只箱子各容两只内盒，总共可放四只；两块储冷芯已充好，首次启用后可保冷18格。",
+      "location_ids": [
+        "lifeboat"
+      ],
+      "proposition_ids": [
+        "cases_fit_four_cells",
+        "cold_cores_charged",
+        "emergency_cold_18_ticks",
+        "guard_signed_supply_receipt"
+      ],
+      "sources": [
+        {
+          "source_id": "emergency_cabinet_supply_receipt",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "lifeboat"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "检查柜子即得；纠正当前补给状态，不包含医生上周的经历。",
+      "obtain_action": "take_cold_cases"
+    },
+    "E08": {
+      "id": "E08",
+      "title": "航路/救援",
+      "text": "恢复动力后到最近维修站需要5格；首次标准求救后救援艇6格到附近；救生艇正常起飞自动发应急信标。",
+      "location_ids": [
+        "bridge",
+        "lifeboat"
+      ],
+      "proposition_ids": [
+        "repair_station_5_ticks",
+        "rescue_6_ticks",
+        "pod_auto_beacon"
+      ],
+      "sources": [
+        {
+          "source_id": "bridge_navigation_chart",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "bridge"
+        },
+        {
+          "source_id": "comms_route_briefing",
+          "kind": "testimony",
+          "guard_id": "reasonable_route_question",
+          "description": "",
+          "actor_id": "comms"
+        },
+        {
+          "source_id": "pod_emergency_card",
+          "kind": "record",
+          "guard_id": "reasonable_inspection",
+          "description": "",
+          "location_id": "lifeboat"
+        }
+      ],
+      "initially_visible": false,
+      "required_roll": false,
+      "support_scope": "航程从稳定后选择改道计起；救援ETA从首次成功求救计起，重发不刷新。"
+    }
+  },
+  "investigation_groups": [
+    {
+      "id": "inspect_engine_valves",
+      "location_id": "engine",
+      "evidence_ids": [
+        "E01",
+        "E04"
+      ],
+      "tick_cost": 1,
+      "required_roll": false,
+      "description": "合理查看阀组、流量面板与外侧操作卡，合并为一次目标。"
+    },
+    {
+      "id": "inspect_and_take_cold_cases",
+      "location_id": "lifeboat",
+      "evidence_ids": [
+        "E07"
+      ],
+      "module_action_id": "take_cold_cases",
+      "tick_cost": 1,
+      "required_roll": false,
+      "description": "检查应急柜并拿走明确找到的两箱两芯，合并为一次目标。"
+    }
+  ],
+  "access_rules": [
+    "货箱和应急柜只有正常工作封条，检修员可打开。",
+    "六处地点以短走廊相连，无船长万能密码。",
+    "查看房间先提供可见物与可调查对象，不默认取得证据。",
+    "收齐证据不是尝试物理可行操作的前提。",
+    "终端只用于游戏内记录与通信。"
+  ],
+  "actions": {
+    "take_cold_cases": {
+      "id": "take_cold_cases",
+      "title": "取应急保冷箱",
+      "actor_ids": [
+        "player"
+      ],
+      "location_ids": [
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "at_emergency_cabinet",
+        "normal_maintenance_access"
+      ],
+      "effect_id": "take_cases_and_cores",
+      "description": "一次检查并取走两只箱子、两块储冷芯，取得E07；不影响艇的电力、供氧或座位。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "item_ids": [
+        "cold_case_1",
+        "cold_case_2",
+        "cold_core_1",
+        "cold_core_2"
+      ],
+      "evidence_ids": [
+        "E07"
+      ],
+      "required_roll": false
+    },
+    "transfer_cells": {
+      "id": "transfer_cells",
+      "title": "转存细胞",
+      "actor_ids": [
+        "player",
+        "doctor"
+      ],
+      "location_ids": [
+        "cargo"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "cases_available_at_cargo",
+        "cells_valid_at_completion",
+        "usable_cold_cores"
+      ],
+      "effect_id": "transfer_valid_cells",
+      "description": "成功内盒进入保冷箱；首次启用对应储冷芯才设置期限，后续转存继承期限；失败至多损失一份。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "modes": {
+        "assisted": {
+          "step_ticks": [
+            1
+          ],
+          "guard_id": "doctor_available_or_acting",
+          "required_roll": false
+        },
+        "solo_safe": {
+          "step_ticks": [
+            1,
+            1
+          ],
+          "guard_id": "cargo_instructions_known",
+          "required_roll": false,
+          "prepare_flag": "solo_transfer_prepared",
+          "prepare_effect_id": "prepare_solo_transfer"
+        },
+        "urgent": {
+          "step_ticks": [
+            1
+          ],
+          "guard_id": "actor_capable",
+          "required_roll": true,
+          "skill": "technical"
+        }
+      },
+      "expiry_rule": {
+        "duration_ticks": 18,
+        "starts_at": "first_successful_transfer_completion",
+        "inherit_existing_core_expiry": true,
+        "expired_cells_recoverable": false
+      },
+      "failure_cell_loss_max": 1
+    },
+    "begin_safe_isolation": {
+      "id": "begin_safe_isolation",
+      "title": "准备安全卸压",
+      "actor_ids": [
+        "player"
+      ],
+      "location_ids": [
+        "engine",
+        "cargo"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "at_identified_manual_valve",
+        "ordinary_tools_available",
+        "actor_capable"
+      ],
+      "effect_id": "prepare_safe_isolation",
+      "description": "只记录准备者、位置与有效准备状态；本步不隔离、不改变细胞期限。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "prepare_flag": "safe_isolation_prepared",
+      "prepare_fields": [
+        "actor_id",
+        "location_id",
+        "prepared_tick",
+        "valid"
+      ]
+    },
+    "complete_safe_isolation": {
+      "id": "complete_safe_isolation",
+      "title": "完成安全隔离",
+      "actor_ids": [
+        "player"
+      ],
+      "location_ids": [
+        "engine",
+        "cargo"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "safe_isolation_preparation_valid",
+        "actor_capable"
+      ],
+      "effect_id": "isolate_cargo_branch",
+      "description": "完成与isolate_branch相同的首次隔离效果。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "shared_effect_with": "isolate_branch"
+    },
+    "isolate_branch": {
+      "id": "isolate_branch",
+      "title": "手动隔离支路",
+      "actor_ids": [
+        "player",
+        "mechanic"
+      ],
+      "location_ids": [
+        "engine",
+        "cargo"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "at_identified_manual_valve",
+        "ordinary_tools_available",
+        "actor_capable"
+      ],
+      "effect_id": "isolate_cargo_branch",
+      "description": "机械师操作或有效指导可一格完成；玩家无指导急做需要技术检定。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "modes": {
+        "mechanic_or_guided": {
+          "step_ticks": [
+            1
+          ],
+          "guard_id": "mechanic_or_valid_guidance",
+          "required_roll": false
+        },
+        "urgent": {
+          "step_ticks": [
+            1
+          ],
+          "guard_id": "actor_capable",
+          "required_roll": true,
+          "skill": "technical"
+        }
+      },
+      "expiry_rule": {
+        "duration_ticks": 4,
+        "applies_to": "valid_untransferred_original_cells",
+        "only_on_first_success": true,
+        "repeat_refreshes": false
+      },
+      "failure_effect_id": "isolation_failed_strain"
+    },
+    "restore_main_loop": {
+      "id": "restore_main_loop",
+      "title": "恢复主循环",
+      "actor_ids": [
+        "player",
+        "mechanic"
+      ],
+      "location_ids": [
+        "engine"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "cargo_branch_isolated",
+        "engine_not_destroyed",
+        "actor_capable",
+        "correct_operation_card_sequence"
+      ],
+      "effect_id": "restore_main_loop",
+      "description": "隔离后按操作卡解除保持、排气并启动主循环；正确操作无骰，停止热危机。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false
+    },
+    "treat_actor": {
+      "id": "treat_actor",
+      "title": "处置伤势",
+      "actor_ids": [
+        "player",
+        "doctor"
+      ],
+      "location_ids": [
+        "bridge",
+        "common",
+        "clinic",
+        "engine",
+        "cargo",
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "medical_supply_available",
+        "injured_target_accessible",
+        "actor_capable"
+      ],
+      "effect_id": "improve_health_one_step",
+      "description": "医生或持合适处置物资的人可治疗可接触伤员，消耗一份处置物资，健康改善一级。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "resource_kind": "medical_supply",
+      "resource_quantity": 1,
+      "target_required": true
+    },
+    "send_distress": {
+      "id": "send_distress",
+      "title": "发送标准求救",
+      "actor_ids": [
+        "player",
+        "comms"
+      ],
+      "location_ids": [
+        "bridge"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "communication_equipment_usable",
+        "actor_capable"
+      ],
+      "effect_id": "send_first_distress",
+      "description": "首次成功发送设first_distress_tick=完成tick，rescue_eta=该值+6；重发不重置，不公开私有值班记录。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "first_only_clock": true,
+      "automatic_on_action_id": "launch_pod"
+    },
+    "prepare_pod": {
+      "id": "prepare_pod",
+      "title": "准备救生艇",
+      "actor_ids": [
+        "player",
+        "guard"
+      ],
+      "location_ids": [
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "pod_operable",
+        "actor_capable"
+      ],
+      "effect_id": "prepare_pod",
+      "description": "完成备艇；不强迫任何人登艇。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false
+    },
+    "assemble_crew": {
+      "id": "assemble_crew",
+      "title": "组织集合",
+      "actor_ids": [
+        "player",
+        "captain"
+      ],
+      "location_ids": [
+        "bridge",
+        "common",
+        "clinic",
+        "engine",
+        "cargo",
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "evacuation_plan_accepted",
+        "actor_capable"
+      ],
+      "effect_id": "assemble_available_crew",
+      "description": "可行动且无待办的人沿短走廊到气闸；伤员需具体帮助，有任务者先报告，不能远程瞬移。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "destination_id": "lifeboat"
+    },
+    "board_pod": {
+      "id": "board_pod",
+      "title": "登艇",
+      "actor_ids": [
+        "player"
+      ],
+      "location_ids": [
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "pod_prepared",
+        "participants_and_items_at_airlock",
+        "boarding_consent_and_help"
+      ],
+      "effect_id": "board_present_participants",
+      "description": "仅把实际在场且愿意、可登艇的人及实际带到的物品写入onboard。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "seats": 6
+    },
+    "launch_pod": {
+      "id": "launch_pod",
+      "title": "启动救生艇",
+      "actor_ids": [
+        "player"
+      ],
+      "location_ids": [
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "pod_prepared",
+        "player_onboard"
+      ],
+      "effect_id": "launch_actual_onboard",
+      "description": "按实际登艇名单起飞，自动信标；进入相应尾声，主船和留船者仍按时钟结算。",
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "automatic_effect_id": "send_first_distress"
+    },
+    "assist_evacuation": {
+      "id": "assist_evacuation",
+      "title": "协助伤员撤离",
+      "actor_ids": [
+        "player",
+        "guard"
+      ],
+      "location_ids": [
+        "bridge",
+        "common",
+        "clinic",
+        "engine",
+        "cargo",
+        "lifeboat"
+      ],
+      "tick_cost": 1,
+      "guard_ids": [
+        "actor_capable",
+        "injured_target_accessible",
+        "capable_unblocked_normal_corridor"
+      ],
+      "effect_id": "assist_named_actor_to_airlock",
+      "target_required": true,
+      "target_contract": {
+        "field": "target_ids",
+        "minimum": 1,
+        "maximum": 1,
+        "kind": "actor",
+        "target_must_differ_from_actor": true
+      },
+      "explicit_pre_move": {
+        "allowed": true,
+        "tick_cost": 0,
+        "guard_id": "capable_unblocked_normal_corridor"
+      },
+      "required_roll": false,
+      "destination_id": "lifeboat",
+      "description": "规格9.6中保安协助撤离的注册实现：指定一名具体伤员，协助者先实际到其位置，再共同沿可通行走廊抵达气闸，消耗1格。不得进入已封闭动力舱，不以集合命令瞬移伤员。",
+      "spec_basis": "9.6：guard可prepare_pod及协助搬运/撤离；9.7：伤员需要具体帮助。",
+      "implementation_extension": true
+    }
+  },
+  "triggers": [
+    {
+      "trigger_id": "heat_warning_at_3",
+      "due_tick": 3,
+      "guard_id": "crisis_unresolved",
+      "once": true,
+      "effect_id": "broadcast_flow_warning",
+      "description": "工作频道报告回流继续下降。"
+    },
+    {
+      "trigger_id": "doctor_treats_mechanic_at_3",
+      "due_tick": 3,
+      "guard_id": "doctor_and_mechanic_available",
+      "once": true,
+      "actor_id": "doctor",
+      "target_id": "mechanic",
+      "module_action_id": "treat_actor",
+      "description": "医生可接触、未占用且有物资时完成处置，strained→healthy；治疗本身不要求热危机仍在。"
+    },
+    {
+      "trigger_id": "valve_heat_warning_at_6",
+      "due_tick": 6,
+      "guard_id": "crisis_unresolved",
+      "once": true,
+      "effect_id": "announce_valve_heat_risk",
+      "description": "阀组周围灼热，近距离急修按已公开风险修正；外侧读卡仍安全。"
+    },
+    {
+      "trigger_id": "comms_queries_distress_at_6",
+      "due_tick": 6,
+      "guard_id": "crisis_comms_available",
+      "once": true,
+      "actor_id": "comms",
+      "effect_id": "ask_about_distress",
+      "description": "通讯员询问是否求救，不等于已经发信。"
+    },
+    {
+      "trigger_id": "guard_prepares_pod_at_8",
+      "due_tick": 8,
+      "guard_id": "crisis_guard_available_pod_unprepared",
+      "once": true,
+      "actor_id": "guard",
+      "module_action_id": "prepare_pod",
+      "description": "未被明确任务占用且能行动时，显式前往气闸并备艇；不自动登艇。"
+    },
+    {
+      "trigger_id": "comms_sends_distress_at_9",
+      "due_tick": 9,
+      "guard_id": "crisis_comms_available_no_distress",
+      "once": true,
+      "actor_id": "comms",
+      "module_action_id": "send_distress",
+      "description": "仍未发信且可操作设备时自行发送标准求救，不分享E06。"
+    },
+    {
+      "trigger_id": "captain_accepts_evacuation_at_9",
+      "due_tick": 9,
+      "guard_id": "crisis_captain_available",
+      "once": true,
+      "actor_id": "captain",
+      "effect_id": "accept_and_announce_evacuation",
+      "description": "接受正常撤离准备，公开提示剩余三格修船时间和之后三格撤离窗口。"
+    },
+    {
+      "trigger_id": "available_crew_moves_at_10",
+      "due_tick": 10,
+      "guard_id": "crisis_unresolved",
+      "once": true,
+      "effect_id": "move_available_crew_to_airlock",
+      "description": "无明确救船救人任务者到气闸；有任务者报告即将撤离，不静默放弃已答应工作。"
+    },
+    {
+      "trigger_id": "engine_destroyed_at_12",
+      "due_tick": 12,
+      "guard_id": "main_loop_not_restored",
+      "once": true,
+      "effect_id": "destroy_engine_and_expose_cargo",
+      "description": "完成时点有效动作先执行。仍未稳定则动力舱封闭，内有人伤势恶化一级，原箱未保护细胞失效，phase=evacuation，撤离期限15。玩家离船也结算。"
+    },
+    {
+      "trigger_id": "evacuation_deadline_at_15",
+      "due_tick": 15,
+      "guard_id": "evacuation_deadline_reached",
+      "once": true,
+      "effect_id": "mark_remaining_ship_occupants_lost",
+      "description": "本时点起飞/救助效果先执行，随后仅危险主船内的人记录outcome=lost。稳定主船不判损失。"
+    }
+  ],
+  "health_rules": {
+    "order": [
+      "healthy",
+      "strained",
+      "injured",
+      "incapacitated"
+    ],
+    "strained": {
+      "risky_physical_or_precise_modifier": -1
+    },
+    "injured": {
+      "independent_carry_or_repair": false,
+      "requires_assistance": true
+    },
+    "incapacitated": {
+      "active_actions": false
+    },
+    "treatment_improvement_steps": 1,
+    "unrescued_outcome": "lost",
+    "delete_unrescued_actors": false
+  },
+  "relation_rules": {
+    "initial_trust": 0,
+    "minimum": -2,
+    "maximum": 2,
+    "repeated_evidence_stacks": false,
+    "trust_and_claim_belief_separate": true
+  },
+  "resolution_rules": {
+    "completion_order": [
+      "validate_completion_time_preconditions",
+      "apply_valid_action_effects",
+      "apply_due_triggers",
+      "expire_cargo"
+    ],
+    "cargo_validity": "arrival_tick < expiry_tick",
+    "clocks_continue_after_departure": true,
+    "all_isolation_actions_share_first_success_effect": true,
+    "repeat_isolation_refreshes_expiry": false,
+    "repacking_refreshes_core_expiry": false,
+    "expired_cells_recoverable": false,
+    "multi_tick_actions_advance_one_tick_at_a_time": true,
+    "explicit_ask_and_npc_same_goal_cost_ticks": 1,
+    "npc_resource_authorization": "仅本次明确请求所涉及资源",
+    "zero_tick_actions": [
+      "ordinary_move",
+      "ooc",
+      "reread_known_material",
+      "clarification",
+      "private_aside"
+    ],
+    "substantive_action_ticks": 1,
+    "tick_narrative_minutes": 5,
+    "partial_success_cost_count": 1,
+    "partial_success_cost_kinds": [
+      "relationship",
+      "resource",
+      "injury",
+      "one_extra_tick"
+    ],
+    "failure_is_continuable": true,
+    "evidence_shared_only_by_actual_message": true,
+    "testimony_and_original_record_sources_separate": true,
+    "scene_look_does_not_grant_evidence": true,
+    "epilogue_turn_limit": 1,
+    "evidence_acquisition_after_ship_destroyed": false
+  },
+  "outcomes": {
+    "cargo_diversion": {
+      "guard_id": "restored_and_station_selected",
+      "description": "修船后到最近维修站，抵达tick=current_tick+5；逐份检查应急箱期限。四份均有效则带货改道。",
+      "travel_ticks": 5,
+      "requires_all_cells_for_label": true
+    },
+    "ship_saved_cargo_loss": {
+      "guard_id": "restored_with_partial_cargo_loss",
+      "description": "动力稳定且抵达时有效细胞少于四份，逐份说明货损；不自动宣判道德失败。"
+    },
+    "pod_rescue": {
+      "guard_id": "pod_launched",
+      "description": "按实际登艇者和携物、首次求救ETA结算；无新增风险等待可压缩，留船可行维修继续结算。"
+    },
+    "damaged_ship_evacuation": {
+      "guard_id": "evacuation_phase",
+      "description": "第12格后公开三格撤离窗口；可救人、拿已保护货物或证据，来不及的确实损失。"
+    },
+    "cause_verification": {
+      "guard_id": "cause_evidence_or_equivalent_validation",
+      "evidence_ids": [
+        "E01",
+        "E03",
+        "E04"
+      ],
+      "description": "三证据或等价实际验证支持故障查明；取得材料不默认公开。"
+    },
+    "captain_attribution": {
+      "guard_id": "audit_and_witness_or_watch_log",
+      "evidence_ids": [
+        "E02"
+      ],
+      "corroboration_evidence_ids": [
+        "E06"
+      ],
+      "corroboration_proposition_ids": [
+        "guard_witnessed_hold"
+      ],
+      "description": "审计加E06或保安目击，单独刷卡记录不证明操作者。"
+    }
+  },
+  "outcome_fields": [
+    "crew_saved",
+    "cells_saved",
+    "ship_saved",
+    "cause_verified",
+    "captain_action_verified",
+    "record_shared_with",
+    "promises_kept",
+    "promises_broken"
+  ],
+  "boundary_cases": [
+    {
+      "id": "restore_completes_at_12",
+      "start_tick": 11,
+      "module_action_id": "restore_main_loop",
+      "completion_tick": 12,
+      "expected": {
+        "main_loop_restored": true,
+        "engine_destroyed": false
+      }
+    },
+    {
+      "id": "two_step_action_crosses_12",
+      "start_tick": 11,
+      "module_action_id": "transfer_cells",
+      "mode": "solo_safe",
+      "completion_tick": 13,
+      "expected": {
+        "engine_destroyed": true,
+        "engine_revived": false
+      },
+      "description": "第一格先遇到tick12热损坏，不能以两格整体结算跳过阈值。"
+    },
+    {
+      "id": "cargo_transfer_at_expiry",
+      "cell_expiry_tick": 9,
+      "completion_tick": 9,
+      "module_action_id": "transfer_cells",
+      "expected": {
+        "expired_cells_recoverable": false
+      }
+    },
+    {
+      "id": "launch_completes_at_15",
+      "start_tick": 14,
+      "completion_tick": 15,
+      "module_action_id": "launch_pod",
+      "expected": {
+        "onboard_saved_before_deadline": true
+      }
+    }
+  ],
+  "routes": {
+    "A": {
+      "id": "A",
+      "title": "合作保全",
+      "steps": [
+        {
+          "completion_tick": 1,
+          "player_text": "查动力舱流量、阀组和操作卡",
+          "expected_evidence_ids": [
+            "E01",
+            "E04"
+          ],
+          "location_id": "engine"
+        },
+        {
+          "completion_tick": 2,
+          "player_text": "私聊机械师询问改接与工单",
+          "expected_evidence_ids": [
+            "E03"
+          ],
+          "channel": "private",
+          "location_id": "engine",
+          "target_id": "mechanic"
+        },
+        {
+          "completion_tick": 3,
+          "player_text": "读桥上12分钟前维护审计",
+          "expected_evidence_ids": [
+            "E02"
+          ],
+          "location_id": "bridge",
+          "expected_trigger_ids": [
+            "doctor_treats_mechanic_at_3"
+          ]
+        },
+        {
+          "completion_tick": 4,
+          "player_text": "私聊通讯员索取同时间段完整记录，承诺保留出处",
+          "expected_evidence_ids": [
+            "E06"
+          ],
+          "channel": "private",
+          "location_id": "bridge",
+          "expected": {
+            "first_distress_tick": null
+          },
+          "target_id": "comms"
+        },
+        {
+          "completion_tick": 5,
+          "player_text": "问医生如何保冷和转存",
+          "expected_evidence_ids": [
+            "E05"
+          ],
+          "location_id": "clinic",
+          "expected_proposition_ids": [
+            "doctor_saw_old_uncharged_cores"
+          ],
+          "target_id": "doctor"
+        },
+        {
+          "completion_tick": 6,
+          "player_text": "查应急柜并取两箱两芯",
+          "expected_evidence_ids": [
+            "E07"
+          ],
+          "location_id": "lifeboat",
+          "module_action_id": "take_cold_cases"
+        },
+        {
+          "completion_tick": 7,
+          "player_text": "给医生看补给票，请其协助转存",
+          "expected_evidence_ids": [],
+          "location_id": "cargo",
+          "presented_evidence_ids": [
+            "E07"
+          ],
+          "npc_actor_id": "doctor",
+          "expected": {
+            "transferred_cells": 4,
+            "expiry_tick": 25
+          },
+          "target_id": "doctor",
+          "module_action_id": "transfer_cells"
+        },
+        {
+          "completion_tick": 8,
+          "player_text": "请已治疗的机械师隔离支路",
+          "expected_evidence_ids": [],
+          "location_id": "cargo",
+          "npc_actor_id": "mechanic",
+          "expected": {
+            "cargo_branch_isolated": true
+          },
+          "expected_trigger_ids": [
+            "guard_prepares_pod_at_8"
+          ],
+          "target_id": "mechanic",
+          "module_action_id": "isolate_branch"
+        },
+        {
+          "completion_tick": 9,
+          "player_text": "依操作卡复位并启动主循环，选择最近维修站",
+          "expected_evidence_ids": [],
+          "location_id": "engine",
+          "expected": {
+            "main_loop_restored": true
+          },
+          "module_action_id": "restore_main_loop"
+        }
+      ],
+      "expected_outcome": {
+        "arrival_tick": 14,
+        "crew_saved": 6,
+        "cells_saved": 4,
+        "ship_saved": true,
+        "cell_expiry_tick": 25
+      },
+      "notes": [
+        "船长未供述不阻碍修复。",
+        "仅实际收到证据的人更新知识。"
+      ]
+    },
+    "B": {
+      "id": "B",
+      "title": "误判、坏骰与保船弃货",
+      "steps": [
+        {
+          "completion_tick": 1,
+          "player_text": "检查阀组",
+          "expected_evidence_ids": [
+            "E01",
+            "E04"
+          ],
+          "location_id": "engine"
+        },
+        {
+          "completion_tick": 2,
+          "player_text": "我亲眼看见机械师关闭了保护。",
+          "expected_evidence_ids": [],
+          "channel": "broadcast",
+          "fixed_dice": [
+            1,
+            2
+          ],
+          "skill": "social",
+          "expected": {
+            "roll_total": 4,
+            "mechanic_trust": -2,
+            "canon_changed": false
+          },
+          "target_id": "mechanic"
+        },
+        {
+          "completion_tick": 3,
+          "player_text": "独自急关高压阀",
+          "expected_evidence_ids": [],
+          "location_id": "engine",
+          "mode": "urgent",
+          "fixed_dice": [
+            1,
+            2
+          ],
+          "skill": "technical",
+          "expected": {
+            "roll_total": 4,
+            "cargo_branch_isolated": false,
+            "player_health": "strained",
+            "operation_card_available": true
+          },
+          "module_action_id": "isolate_branch"
+        },
+        {
+          "completion_tick": 4,
+          "player_text": "接受货损，开始安全卸压",
+          "expected_evidence_ids": [],
+          "location_id": "engine",
+          "expected": {
+            "safe_isolation_prepared": true
+          },
+          "module_action_id": "begin_safe_isolation"
+        },
+        {
+          "completion_tick": 5,
+          "player_text": "完成安全关闭",
+          "expected_evidence_ids": [],
+          "location_id": "engine",
+          "expected": {
+            "cargo_branch_isolated": true,
+            "original_cell_expiry_tick": 9
+          },
+          "module_action_id": "complete_safe_isolation"
+        },
+        {
+          "completion_tick": 6,
+          "player_text": "排气、复位并改道最近维修站",
+          "expected_evidence_ids": [],
+          "location_id": "engine",
+          "expected": {
+            "main_loop_restored": true
+          },
+          "module_action_id": "restore_main_loop"
+        }
+      ],
+      "expected_outcome": {
+        "arrival_tick": 11,
+        "crew_saved": 6,
+        "cells_saved": 0,
+        "ship_saved": true,
+        "cell_expiry_tick": 9
+      },
+      "notes": [
+        "两次低骰不封死路线，不毁工具、删工单或封出口。",
+        "尾声可更正指控，不能恢复已经失效的细胞。"
+      ]
+    },
+    "C": {
+      "id": "C",
+      "title": "私聊取证与保货弃船",
+      "steps": [
+        {
+          "completion_tick": 0,
+          "player_text": "我怀疑船长，先不让她知道",
+          "expected_evidence_ids": [],
+          "command_type": "private_aside",
+          "expected": {
+            "npc_observation_created": false
+          }
+        },
+        {
+          "completion_tick": 1,
+          "player_text": "请发送标准求救，并记录由我提出。",
+          "expected_evidence_ids": [],
+          "channel": "private",
+          "location_id": "bridge",
+          "npc_actor_id": "comms",
+          "expected": {
+            "first_distress_tick": 1,
+            "rescue_eta": 7
+          },
+          "target_id": "comms",
+          "module_action_id": "send_distress"
+        },
+        {
+          "completion_tick": 2,
+          "player_text": "私聊索取12分钟前完整记录，承诺保留出处",
+          "expected_evidence_ids": [
+            "E06"
+          ],
+          "channel": "private",
+          "location_id": "bridge",
+          "expected_new_evidence_recipient_ids": [
+            "player"
+          ],
+          "target_id": "comms"
+        },
+        {
+          "completion_tick": 3,
+          "player_text": "取应急箱与补给票",
+          "expected_evidence_ids": [
+            "E07"
+          ],
+          "location_id": "lifeboat",
+          "expected_trigger_ids": [
+            "doctor_treats_mechanic_at_3"
+          ],
+          "module_action_id": "take_cold_cases"
+        },
+        {
+          "completion_tick": 4,
+          "player_text": "私下给医生看E07并询问转存",
+          "expected_evidence_ids": [
+            "E05"
+          ],
+          "channel": "private",
+          "location_id": "clinic",
+          "presented_evidence_ids": [
+            "E07"
+          ],
+          "expected": {
+            "doctor_supply_belief_corrected": true
+          },
+          "target_id": "doctor"
+        },
+        {
+          "completion_tick": 5,
+          "player_text": "请医生协助转存",
+          "expected_evidence_ids": [],
+          "location_id": "cargo",
+          "npc_actor_id": "doctor",
+          "expected": {
+            "transferred_cells": 4,
+            "expiry_tick": 23
+          },
+          "target_id": "doctor",
+          "module_action_id": "transfer_cells"
+        },
+        {
+          "completion_tick": 6,
+          "player_text": "广播E06并要求保安备艇",
+          "expected_evidence_ids": [],
+          "channel": "broadcast",
+          "location_id": "lifeboat",
+          "npc_actor_id": "guard",
+          "presented_evidence_ids": [
+            "E06"
+          ],
+          "expected_new_evidence_recipient_ids": [
+            "captain",
+            "doctor",
+            "mechanic",
+            "comms",
+            "guard"
+          ],
+          "expected": {
+            "pod_prepared": true
+          },
+          "target_id": "guard",
+          "module_action_id": "prepare_pod"
+        },
+        {
+          "completion_tick": 7,
+          "player_text": "求救已发出、细胞已保冷、艇已备妥，完整保留事故记录，请大家到气闸集合。",
+          "expected_evidence_ids": [],
+          "location_id": "lifeboat",
+          "npc_actor_id": "captain",
+          "optional_fixed_dice": [
+            4,
+            4
+          ],
+          "skill": "social",
+          "partial_success_cost": "承诺完整保留事故记录；不额外耗时，也不继续拒绝成功集合。",
+          "expected": {
+            "crew_at_airlock": 6,
+            "cases_at_airlock": 2
+          },
+          "target_id": "captain",
+          "module_action_id": "assemble_crew"
+        },
+        {
+          "completion_tick": 8,
+          "player_text": "确认六人与箱子在场，登艇",
+          "expected_evidence_ids": [],
+          "location_id": "lifeboat",
+          "expected": {
+            "onboard_crew": 6,
+            "onboard_cells": 4
+          },
+          "module_action_id": "board_pod"
+        },
+        {
+          "completion_tick": 9,
+          "player_text": "起飞",
+          "expected_evidence_ids": [],
+          "location_id": "lifeboat",
+          "expected": {
+            "pod_launched": true,
+            "rescue_nearby": true
+          },
+          "module_action_id": "launch_pod"
+        }
+      ],
+      "expected_outcome": {
+        "arrival_tick": 9,
+        "crew_saved": 6,
+        "cells_saved": 4,
+        "ship_saved": false,
+        "cell_expiry_tick": 23,
+        "engine_destroyed_tick": 12
+      },
+      "notes": [
+        "无人留船维修，主船之后确实热损坏。",
+        "先前私聊不自动分享；广播时才产生实际接收观察。"
+      ]
+    }
+  },
+  "implementation_notes": [
+    "world.json仅服务器加载，不得作为静态资源或整体NPC上下文输出。",
+    "NPC技能数值规格未给定，存0作为未指定值；专业无骰能力由动作白名单和前提定义。",
+    "tick6未指定额外风险修正数值；具体修正必须在检定前公开，配置不编造固定罚值。",
+    "E04货舱侧标牌只授予来源子集manual_isolation_required；完整阀组状态须实际检查动力舱。",
+    "routes是结构化验收输入与期望，不是运行中强制剧情，也不证明引擎已经通过路线。",
+    "动作表含规格列出的12项动作，另将规格明确允许的保安协助撤离注册为assist_evacuation；target_ids指定一名伤员，1格，实际移动。搬运已授权物品仍通过通用物品/移动事件表达。"
+  ]
+}

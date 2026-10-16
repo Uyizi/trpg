@@ -1,0 +1,748 @@
+{
+  "public": {
+    "module_id": "pinebrook",
+    "module_version": "1.0.0",
+    "title": "松溪镇危机 · Peril in Pinebrook",
+    "premise": "松溪镇附近的冰巨魔足迹再次出现。你和同伴参加一次林间巡逻。官方短模组的中文单人适配，使用简化d20规则。",
+    "opening": "你和三位同伴在镇外集合。守卫队长科尔领着这次巡逻，向你们询问姓名与擅长的事情。近来林中又出现了疑似冰巨魔的足迹。林道通往前方树林。",
+    "rules": [
+      "不确定的技能行动使用d20加角色卡加值，达到DC成功；没有列出的技能加值为0。",
+      "攻击使用d20加命中加值，与目标AC比较；伤害按角色卡结算。优势掷两枚d20取高，劣势取低。",
+      "玩家控制选定角色，三位同伴在战斗中自动以普通攻击协助，不擅自消耗有限能力。",
+      "普通观察、提问、角色交谈和桌外对话不自动推进战斗轮。攻击、战斗中治疗或等待会让同伴和敌人行动。",
+      "生命值到0会昏迷。战斗胜利后昏迷角色恢复到1点；全队倒下则本次护送中止。",
+      "探索失败按当前挑战付出后果，不以重复掷骰强制卡关。",
+      "这不是完整D&D5版实现；单人适配的差异可在操作说明中查看。"
+    ],
+    "characters": [
+      {
+        "id": "shalefire",
+        "name": "Shalefire Stoutheart",
+        "role": "矮人战士",
+        "ac": 16,
+        "hp": 13,
+        "skills": {
+          "animal_handling": 5,
+          "athletics": 6,
+          "perception": 3,
+          "survival": 3
+        },
+        "attacks": [
+          {
+            "id": "handaxe",
+            "name": "手斧",
+            "bonus": 6,
+            "dice": 1,
+            "damage_bonus": 4
+          },
+          {
+            "id": "shortbow",
+            "name": "短弓",
+            "bonus": 3,
+            "dice": 1,
+            "damage_bonus": 0,
+            "ammunition": true
+          }
+        ],
+        "equipment": [
+          "crowbar",
+          "rations",
+          "rope"
+        ],
+        "ability": {
+          "id": "second_wind",
+          "name": "恢复体力",
+          "uses": 1,
+          "heal": 6
+        }
+      },
+      {
+        "id": "noorah",
+        "name": "Noorah Eldenfield",
+        "role": "半身人游荡者",
+        "ac": 14,
+        "hp": 11,
+        "skills": {
+          "acrobatics": 5,
+          "investigation": 3,
+          "perception": 3,
+          "stealth": 5
+        },
+        "attacks": [
+          {
+            "id": "shortsword",
+            "name": "短剑",
+            "bonus": 5,
+            "dice": 1,
+            "damage_bonus": 3
+          },
+          {
+            "id": "shortbow",
+            "name": "短弓",
+            "bonus": 5,
+            "dice": 1,
+            "damage_bonus": 3,
+            "ammunition": true
+          }
+        ],
+        "equipment": [
+          "climbers_kit",
+          "rations",
+          "thieves_tools"
+        ],
+        "ability": {
+          "id": "first_strike",
+          "name": "首轮突袭",
+          "uses": null,
+          "description": "每场战斗第一轮命中时，伤害改为2d6加原加值。"
+        }
+      },
+      {
+        "id": "gallantine",
+        "name": "Gallantine Birchenbough",
+        "role": "精灵法师",
+        "ac": 12,
+        "hp": 9,
+        "skills": {
+          "arcana": 5,
+          "history": 5,
+          "nature": 5,
+          "perception": 3
+        },
+        "attacks": [
+          {
+            "id": "fire_bolt",
+            "name": "火焰箭",
+            "bonus": 5,
+            "fixed_damage": 7
+          },
+          {
+            "id": "quarterstaff",
+            "name": "长棍",
+            "bonus": 3,
+            "dice": 1,
+            "damage_bonus": 0
+          }
+        ],
+        "equipment": [
+          "blank_book",
+          "ink_pen",
+          "mirror",
+          "rations"
+        ],
+        "ability": {
+          "id": "magic_missile",
+          "name": "魔法飞弹",
+          "uses": 2,
+          "description": "三枚飞弹自动命中，各造成3点伤害。"
+        }
+      },
+      {
+        "id": "evandon",
+        "name": "Evandon Haart",
+        "role": "人类牧师",
+        "ac": 14,
+        "hp": 11,
+        "skills": {
+          "athletics": 3,
+          "insight": 5,
+          "perception": 5,
+          "religion": 5
+        },
+        "attacks": [
+          {
+            "id": "mace",
+            "name": "硬头锤",
+            "bonus": 5,
+            "dice": 1,
+            "damage_bonus": 3
+          },
+          {
+            "id": "shortbow",
+            "name": "短弓",
+            "bonus": 2,
+            "dice": 1,
+            "damage_bonus": 0,
+            "ammunition": true
+          }
+        ],
+        "equipment": [
+          "holy_symbol",
+          "rations",
+          "rope"
+        ],
+        "ability": {
+          "id": "cure_wounds",
+          "name": "治疗伤口",
+          "uses": 2,
+          "heal": 7
+        }
+      }
+    ],
+    "source_url": "https://www.dndbeyond.com/posts/1625-peril-in-pinebrook-a-free-introductory-adventure",
+    "ruleset": "pinebrook_d20"
+  },
+  "world": {
+    "schema_version": 2,
+    "module_id": "pinebrook",
+    "module_version": "1.0.0",
+    "engine": "scene_d20",
+    "start": "patrol",
+    "profiles": {
+      "shalefire": {
+        "name": "Shalefire Stoutheart",
+        "role": "矮人战士",
+        "ac": 16,
+        "hp": 13,
+        "skills": {
+          "animal_handling": 5,
+          "athletics": 6,
+          "perception": 3,
+          "survival": 3
+        },
+        "attacks": [
+          {
+            "id": "handaxe",
+            "name": "手斧",
+            "bonus": 6,
+            "dice": 1,
+            "damage_bonus": 4
+          },
+          {
+            "id": "shortbow",
+            "name": "短弓",
+            "bonus": 3,
+            "dice": 1,
+            "damage_bonus": 0,
+            "ammunition": true
+          }
+        ],
+        "equipment": [
+          "crowbar",
+          "rations",
+          "rope"
+        ],
+        "ability": {
+          "id": "second_wind",
+          "name": "恢复体力",
+          "uses": 1,
+          "heal": 6
+        }
+      },
+      "noorah": {
+        "name": "Noorah Eldenfield",
+        "role": "半身人游荡者",
+        "ac": 14,
+        "hp": 11,
+        "skills": {
+          "acrobatics": 5,
+          "investigation": 3,
+          "perception": 3,
+          "stealth": 5
+        },
+        "attacks": [
+          {
+            "id": "shortsword",
+            "name": "短剑",
+            "bonus": 5,
+            "dice": 1,
+            "damage_bonus": 3
+          },
+          {
+            "id": "shortbow",
+            "name": "短弓",
+            "bonus": 5,
+            "dice": 1,
+            "damage_bonus": 3,
+            "ammunition": true
+          }
+        ],
+        "equipment": [
+          "climbers_kit",
+          "rations",
+          "thieves_tools"
+        ],
+        "ability": {
+          "id": "first_strike",
+          "name": "首轮突袭",
+          "uses": null,
+          "description": "每场战斗第一轮命中时，伤害改为2d6加原加值。"
+        }
+      },
+      "gallantine": {
+        "name": "Gallantine Birchenbough",
+        "role": "精灵法师",
+        "ac": 12,
+        "hp": 9,
+        "skills": {
+          "arcana": 5,
+          "history": 5,
+          "nature": 5,
+          "perception": 3
+        },
+        "attacks": [
+          {
+            "id": "fire_bolt",
+            "name": "火焰箭",
+            "bonus": 5,
+            "fixed_damage": 7
+          },
+          {
+            "id": "quarterstaff",
+            "name": "长棍",
+            "bonus": 3,
+            "dice": 1,
+            "damage_bonus": 0
+          }
+        ],
+        "equipment": [
+          "blank_book",
+          "ink_pen",
+          "mirror",
+          "rations"
+        ],
+        "ability": {
+          "id": "magic_missile",
+          "name": "魔法飞弹",
+          "uses": 2,
+          "description": "三枚飞弹自动命中，各造成3点伤害。"
+        }
+      },
+      "evandon": {
+        "name": "Evandon Haart",
+        "role": "人类牧师",
+        "ac": 14,
+        "hp": 11,
+        "skills": {
+          "athletics": 3,
+          "insight": 5,
+          "perception": 5,
+          "religion": 5
+        },
+        "attacks": [
+          {
+            "id": "mace",
+            "name": "硬头锤",
+            "bonus": 5,
+            "dice": 1,
+            "damage_bonus": 3
+          },
+          {
+            "id": "shortbow",
+            "name": "短弓",
+            "bonus": 2,
+            "dice": 1,
+            "damage_bonus": 0,
+            "ammunition": true
+          }
+        ],
+        "equipment": [
+          "holy_symbol",
+          "rations",
+          "rope"
+        ],
+        "ability": {
+          "id": "cure_wounds",
+          "name": "治疗伤口",
+          "uses": 2,
+          "heal": 7
+        }
+      }
+    },
+    "scenes": {
+      "patrol": {
+        "name": "松溪镇外的林道",
+        "description": "你和三位同伴在镇外集合。守卫队长科尔领着这次巡逻，向你们询问姓名与擅长的事情。近来林中又出现了疑似冰巨魔的足迹。林道通往前方树林。",
+        "visible_objects": [
+          "林道",
+          "队长科尔",
+          "巡逻同伴"
+        ],
+        "exits": [
+          "forest"
+        ],
+        "npcs": [
+          "kole"
+        ],
+        "actions": {},
+        "investigations": {}
+      },
+      "forest": {
+        "name": "林间小径",
+        "description": "树丛里钻出一只虚弱的小龙，鳞片呈蓝灰色，头上还粘着银色蛋壳。它发出细小的哀鸣。队长科尔也停了下来。你们可以靠近查看、交谈，或拿出随身物品照顾它。",
+        "visible_objects": [
+          "幼龙",
+          "银色蛋壳",
+          "通向山脚的小径"
+        ],
+        "exits": [
+          "patrol",
+          "mountain"
+        ],
+        "npcs": [
+          "kole"
+        ],
+        "actions": {
+          "accept_escort": {
+            "title": "答应护送幼龙",
+            "handler": "accept_escort"
+          },
+          "feed": {
+            "title": "给幼龙喂食",
+            "handler": "feed"
+          }
+        },
+        "investigations": {
+          "dragon": {
+            "title": "辨认幼龙",
+            "skills": [
+              "animal_handling",
+              "nature"
+            ],
+            "dc": 10,
+            "evidence": "dragon_identity"
+          }
+        }
+      },
+      "mountain": {
+        "name": "山脚洞口",
+        "description": "山脚露出一个洞口，里面逐渐变暗。地上的冰片聚成带利爪的小型生物，向你们扑来。",
+        "visible_objects": [
+          "洞口",
+          "碎冰",
+          "积雪"
+        ],
+        "exits": [
+          "forest",
+          "cave"
+        ],
+        "npcs": [],
+        "actions": {},
+        "investigations": {
+          "backpack": {
+            "title": "搜查洞口的旧背包",
+            "requires": "battle:mountain",
+            "loot": true
+          },
+          "icicles": {
+            "title": "辨认活冰锥",
+            "skills": [
+              "arcana",
+              "history"
+            ],
+            "dc": 10,
+            "evidence": "ice_guards"
+          }
+        },
+        "combat": {
+          "kind": "icicle",
+          "count": 5,
+          "ac": 10,
+          "hp": 7,
+          "attack_bonus": 2,
+          "damage_bonus": 0,
+          "name": "活冰锥"
+        }
+      },
+      "cave": {
+        "name": "洞内通道",
+        "description": "洞壁有粗糙的粉笔画，画中是一些巨魔形状的生物。深处的通道向上延伸，日光照不到那里。",
+        "visible_objects": [
+          "壁画",
+          "黑暗的上行通道"
+        ],
+        "exits": [
+          "mountain",
+          "wall"
+        ],
+        "npcs": [],
+        "actions": {
+          "light": {
+            "title": "点燃火把照明",
+            "handler": "light"
+          }
+        },
+        "investigations": {
+          "drawings": {
+            "title": "研究洞壁画",
+            "skills": [
+              "history",
+              "religion"
+            ],
+            "dc": 10,
+            "evidence": "old_troll_home"
+          }
+        }
+      },
+      "wall": {
+        "name": "结冰的高墙",
+        "description": "前路在约50英尺高处继续。眼前岩壁覆冰，可以寻找落脚处、使用攀爬工具，或设法固定绳索。",
+        "visible_objects": [
+          "冰墙",
+          "上方通道"
+        ],
+        "exits": [
+          "cave",
+          "mirror"
+        ],
+        "npcs": [],
+        "actions": {
+          "climb": {
+            "title": "攀过冰墙",
+            "handler": "climb",
+            "skills": [
+              "athletics",
+              "acrobatics"
+            ],
+            "dc": 10
+          }
+        },
+        "investigations": {}
+      },
+      "mirror": {
+        "name": "冰镜前",
+        "description": "一层冰幕挡住了通道，反光中的你们变成银龙，幼龙却像银色皮肤的孩子。冰面浮现铂色龙首，要求你们用龙语说出：你们护送回家的是什么生物？",
+        "visible_objects": [
+          "冰幕",
+          "映像",
+          "冰后的通道"
+        ],
+        "exits": [
+          "wall",
+          "slides"
+        ],
+        "npcs": [],
+        "actions": {
+          "answer": {
+            "title": "向冰镜说出自己的回答",
+            "handler": "answer"
+          },
+          "melt": {
+            "title": "用火把融开冰幕",
+            "handler": "melt"
+          },
+          "break": {
+            "title": "击碎冰幕",
+            "handler": "break"
+          }
+        },
+        "investigations": {},
+        "solution": "orn darastrix"
+      },
+      "slides": {
+        "name": "冰滑道上方",
+        "description": "前方多条陡峭冰道交错通向大洞窟，有的尽头是冰墙或尖冰。脚下平台开始开裂，需要迅速判断路线并下行。",
+        "visible_objects": [
+          "交错滑道",
+          "尖冰",
+          "开裂平台"
+        ],
+        "exits": [
+          "mirror",
+          "hatchery"
+        ],
+        "npcs": [],
+        "actions": {
+          "choose_slide": {
+            "title": "观察并选择下行滑道",
+            "handler": "choose_slide",
+            "skills": [
+              "investigation",
+              "perception"
+            ],
+            "dc": 10
+          },
+          "recover_slide": {
+            "title": "在危险滑道间跳到安全路线",
+            "handler": "recover_slide",
+            "skills": [
+              "acrobatics",
+              "athletics"
+            ],
+            "dc": 15
+          }
+        },
+        "investigations": {}
+      },
+      "hatchery": {
+        "name": "孵化洞窟",
+        "description": "洞窟中央有两枚银色龙蛋和一处破壳。白色蛙形生物正逼近巢穴，看到你们后露出利齿扑了过来。",
+        "visible_objects": [
+          "龙巢",
+          "两枚龙蛋",
+          "破壳",
+          "白色蛙形生物"
+        ],
+        "exits": [
+          "slides",
+          "mother"
+        ],
+        "npcs": [],
+        "actions": {},
+        "investigations": {},
+        "combat": {
+          "kind": "snatcher",
+          "count": 3,
+          "ac": 12,
+          "hp": 18,
+          "attack_bonus": 4,
+          "damage_bonus": 2,
+          "name": "盗蛋兽"
+        }
+      },
+      "mother": {
+        "name": "银龙归来的巢穴",
+        "description": "巨大的银龙冲破上方封冰落入洞窟。她警惕地望向你们和巢穴，要求解释来意。幼龙就在附近。",
+        "visible_objects": [
+          "成年银龙",
+          "幼龙",
+          "龙巢"
+        ],
+        "exits": [],
+        "npcs": [
+          "rorn"
+        ],
+        "actions": {
+          "explain_rescue": {
+            "title": "向母龙说明救护幼龙的经过",
+            "handler": "explain_rescue"
+          },
+          "accept_care": {
+            "title": "答应回镇后照料幼龙",
+            "handler": "accept_care"
+          },
+          "decline_care": {
+            "title": "婉拒长期照料幼龙",
+            "handler": "decline_care"
+          },
+          "return_village": {
+            "title": "结束交谈并返回松溪镇",
+            "handler": "return_village"
+          }
+        },
+        "investigations": {}
+      }
+    },
+    "evidence": {
+      "dragon_identity": {
+        "title": "幼龙的身份",
+        "text": "鳞色与蛋壳表明这是一只刚孵化的银龙。可以吃口粮，也能吃适当的浆果和坚果。"
+      },
+      "escort": {
+        "title": "科尔的委托",
+        "text": "科尔请队伍把幼龙护送到附近山中的母龙巢穴。她回镇报告，并留下一页龙语对照资料。山脚方向从林间可见。"
+      },
+      "language": {
+        "title": "随身龙语对照页",
+        "text": "这页中有：silver（银）—orn；dragon（龙）—darastrix；home（家）—okarthel；friend（朋友）—thurirl。"
+      },
+      "ice_guards": {
+        "title": "活冰锥的来历",
+        "text": "这些是魔法生物，冰巨魔有时会用它们守卫地点。"
+      },
+      "old_troll_home": {
+        "title": "壁画记录",
+        "text": "图像显示冰巨魔曾在这座洞窟生活和工作。"
+      },
+      "rorn_story": {
+        "title": "罗恩的说明",
+        "text": "母龙自称Hysvearorn，可以叫她Rorn（罗恩）。她驱走巨魔后在此孵蛋；巨魔反击并带走一枚蛋，她为追赶盗贼暂时离巢。幼龙在她不在时孵化并走入森林。被盗龙蛋的后续营救尚未实现。"
+      }
+    },
+    "skill_names": {
+      "animal_handling": "驯兽",
+      "athletics": "运动",
+      "perception": "察觉",
+      "survival": "求生",
+      "acrobatics": "体操",
+      "investigation": "调查",
+      "stealth": "隐匿",
+      "arcana": "奥秘",
+      "history": "历史",
+      "nature": "自然",
+      "insight": "洞悉",
+      "religion": "宗教"
+    },
+    "item_names": {
+      "crowbar": "撬棍",
+      "rations": "口粮（一天）",
+      "rope": "50英尺绳索",
+      "climbers_kit": "攀爬工具",
+      "thieves_tools": "盗贼工具",
+      "blank_book": "空白书",
+      "ink_pen": "墨水和笔",
+      "mirror": "小镜子",
+      "holy_symbol": "圣徽",
+      "draconic_page": "龙语对照页",
+      "torch": "火把",
+      "flint": "燧石与火镰",
+      "meat": "肉干",
+      "gold": "12枚金币",
+      "diamond": "钻石（50金币）"
+    },
+    "npcs": {
+      "kole": {
+        "name": "科尔队长",
+        "role": "松溪镇守卫队长",
+        "knowledge": {
+          "patrol": "今日带队巡逻；昨天巡逻发现冰巨魔脚印，附近有友善银龙的传闻。",
+          "forest": "这是一只新生银龙，需要食物；母龙巢穴应在可见的邻近山中。你要回镇报告，愿把龙语页交给接受护送的队伍。"
+        }
+      },
+      "rorn": {
+        "name": "罗恩",
+        "role": "成年银龙",
+        "knowledge": {
+          "mother": "你是Hysvearorn，简称Rorn。赶走巨魔后在这里孵蛋，巨魔趁机偷蛋；追赶使你暂离。初见陌生人靠近巢穴时警惕；听到有根据的救护说明后感激。可以解释Nytha是妈妈。具体奖励是否已给出以事件为准，不口头执行。"
+        }
+      }
+    },
+    "source": {
+      "title": "Peril in Pinebrook",
+      "author": "Shawn Merwin / Wizards of the Coast",
+      "url": "https://media.wizards.com/2023/downloads/dnd/Peril_in_Pinebrook_COMPLETE.pdf",
+      "sha256": "f0b92f0272c3b9bf383c3d3bc21fbe2ee90b2f7241610b550210f6801f538fbb",
+      "pages": {
+        "rules": [
+          3,
+          5
+        ],
+        "encounters": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "characters": [
+          17,
+          18,
+          19,
+          20
+        ]
+      },
+      "notice": "个人本地非商业适配；官方原文与插图不经接口发布。本JSON为本地规则数据和自写短场景说明。"
+    },
+    "adaptations": [
+      "单人控制一位预设角色，其余三位为同伴。",
+      "战斗每轮先玩家一次行动，其余清醒同伴以基础攻击自动协助，再由存活敌人分散反击；不会自动消耗同伴有限次数能力。",
+      "攀墙与滑道以玩家角色代表操作，绳索帮助同伴跟进；这是单人版简化。",
+      "移动只沿当前已知相邻场景，不能跳过当前挑战；没有五分钟统一时钟。",
+      "可以撤退；全队失去战斗能力则护送中止，不擅自判定死亡或幼龙获救。",
+      "魔法飞弹默认集中同一目标，可明确分配给当前可见目标。",
+      "没有实现被盗龙蛋后续章节。"
+    ],
+    "gates": {
+      "forest:mountain": "escort_accepted",
+      "mountain:cave": "battle:mountain",
+      "cave:wall": "light",
+      "wall:mirror": "wall_passed",
+      "mirror:slides": "mirror_passed",
+      "slides:hatchery": "slides_passed",
+      "hatchery:mother": "battle:hatchery"
+    }
+  }
+}

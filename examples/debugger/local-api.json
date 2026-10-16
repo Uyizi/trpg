@@ -1,0 +1,10 @@
+{
+  "id": "local-api",
+  "backend": "api",
+  "api_base": "http://127.0.0.1:8080/v1",
+  "api_model": "REPLACE_WITH_LOCAL_MODEL_NAME",
+  "max_new_tokens": 1024,
+  "temperature": 0.0,
+  "thinking": false,
+  "timeout_seconds": 120
+}
